@@ -158,22 +158,11 @@ function checkDemographicsStatus(participantId) {
   }
 }
 
-// Get the main spreadsheet (reuse existing function)
+// Get the main spreadsheet (reuse from main Code.js)
 function getOrCreateSpreadsheet() {
-  const SPREADSHEET_NAME = 'PromptLab - Experiment Data';
-  
-  let spreadsheet;
-  
-  // Try to find existing spreadsheet
-  const files = DriveApp.getFilesByName(SPREADSHEET_NAME);
-  if (files.hasNext()) {
-    spreadsheet = SpreadsheetApp.open(files.next());
-  } else {
-    // Create new spreadsheet
-    spreadsheet = SpreadsheetApp.create(SPREADSHEET_NAME);
-  }
-  
-  return spreadsheet;
+  // Delegate to the main function to avoid duplication
+  const sheet = getOrCreateSheet();
+  return sheet.getParent();
 }
 
 // Generate summary statistics for demographics
