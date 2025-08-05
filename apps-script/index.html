@@ -259,6 +259,9 @@
     function handleLoginSuccess(result) {
       sessionData.participantId = result.hash;
       
+      // Store in session storage for demographics page
+      sessionStorage.setItem('participantId', result.hash);
+      
       // Hide login screen
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('mainInterface').style.display = 'block';
@@ -326,11 +329,11 @@
       document.getElementById('metadata').innerHTML = '';
       clearMessage();
       
-      // Call server function
+      // Call server function with demographics check
       google.script.run
         .withSuccessHandler(handleSuccess)
         .withFailureHandler(handleError)
-        .processPrompt({
+        .processPromptWithDemographicsCheck({
           participantId: sessionData.participantId,
           cohortId: sessionData.cohortId,
           prompt: prompt
@@ -346,6 +349,17 @@
           <strong>Response time:</strong> ${new Date(response.timestamp).toLocaleString()}
         `;
         showMessage('Prompt processed successfully!', 'success');
+        
+        // Check if demographics needed (after first submission)
+        if (response.needsDemographics && !sessionStorage.getItem('demographicsCompleted')) {
+          setTimeout(() => {
+            if (confirm('Would you like to provide some optional background information to help improve our research?')) {
+              window.location.href = google.script.getUrl() + '?page=demographics';
+            } else {
+              sessionStorage.setItem('demographicsCompleted', 'true');
+            }
+          }, 2000);
+        }
         
         // Clear the editor for next prompt
         setTimeout(() => {

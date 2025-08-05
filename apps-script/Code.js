@@ -1,12 +1,21 @@
 // Main entry point for the web app
-function doGet() {
+function doGet(e) {
   try {
+    // Check if this is demographics page request
+    if (e.parameter.page === 'demographics') {
+      return HtmlService.createHtmlOutputFromFile('demographics')
+        .setTitle('Study Information')
+        .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
+        .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+    }
+    
+    // Default to main interface
     return HtmlService.createHtmlOutputFromFile('index')
       .setTitle('Session')
       .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
       .addMetaTag('viewport', 'width=device-width, initial-scale=1');
   } catch (error) {
-    // Return error page if index.html is not found
+    // Return error page if files are not found
     return HtmlService.createHtmlOutput(`
       <h1>Error Loading Application</h1>
       <p>Error: ${error.toString()}</p>
