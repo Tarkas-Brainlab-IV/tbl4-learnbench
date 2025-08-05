@@ -3,7 +3,7 @@ function doGet(e) {
   try {
     // Check if this is demographics page request
     if (e.parameter.page === 'demographics') {
-      return HtmlService.createHtmlOutputFromFile('demographics')
+      return HtmlService.createHtmlOutputFromFile('demographics-form')
         .setTitle('Study Information')
         .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
         .addMetaTag('viewport', 'width=device-width, initial-scale=1');
