@@ -414,13 +414,23 @@ function processPrompt(data) {
     
     console.log('Successfully logged to sheet with cohort:', cohortInfo.cohort);
     
+    // Check if demographics needed (after first submission)
+    let needsDemographics = false;
+    try {
+      const demographicsCheck = checkNeedsDemographics(data.participantId);
+      needsDemographics = demographicsCheck.needsDemographics;
+    } catch (e) {
+      console.log('Demographics check error:', e);
+    }
+    
     // Return response to client
     return {
       success: true,
       output: geminiResponse.output,
       model: geminiResponse.model,
       tokens: geminiResponse.tokens,
-      timestamp: timestamp.toISOString()
+      timestamp: timestamp.toISOString(),
+      needsDemographics: needsDemographics
     };
     
   } catch (error) {

@@ -329,11 +329,11 @@
       document.getElementById('metadata').innerHTML = '';
       clearMessage();
       
-      // Call server function with demographics check
+      // Call server function
       google.script.run
         .withSuccessHandler(handleSuccess)
         .withFailureHandler(handleError)
-        .processPromptWithDemographicsCheck({
+        .processPrompt({
           participantId: sessionData.participantId,
           cohortId: sessionData.cohortId,
           prompt: prompt
