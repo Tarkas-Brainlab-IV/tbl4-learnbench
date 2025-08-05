@@ -414,13 +414,25 @@ function processPrompt(data) {
     
     console.log('Successfully logged to sheet with cohort:', cohortInfo.cohort);
     
-    // Check if demographics needed (after first submission)
+    // Check if demographics needed (simplified for now)
     let needsDemographics = false;
     try {
-      const demographicsCheck = checkNeedsDemographics(data.participantId);
-      needsDemographics = demographicsCheck.needsDemographics;
+      // Count submissions by this participant in current data
+      const currentData = sheet.getDataRange().getValues();
+      let submissionCount = 0;
+      for (let i = 1; i < currentData.length; i++) {
+        if (currentData[i][1] === data.participantId) {
+          submissionCount++;
+        }
+      }
+      
+      // Only show demographics after first submission
+      // For now, we'll just track it client-side with sessionStorage
+      needsDemographics = (submissionCount === 1);
+      
     } catch (e) {
       console.log('Demographics check error:', e);
+      needsDemographics = false;
     }
     
     // Return response to client
