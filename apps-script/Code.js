@@ -458,18 +458,41 @@ function processPrompt(data) {
 
 // Get or create the logging spreadsheet
 function getOrCreateSheet() {
-  const SPREADSHEET_NAME = 'PromptLab - Prompt Data';
   const SHEET_NAME = 'Prompts';
-  
   let spreadsheet;
   
-  // Try to find existing spreadsheet
-  const files = DriveApp.getFilesByName(SPREADSHEET_NAME);
-  if (files.hasNext()) {
-    spreadsheet = SpreadsheetApp.open(files.next());
-  } else {
-    // Create new spreadsheet
-    spreadsheet = SpreadsheetApp.create(SPREADSHEET_NAME);
+  // First try to get spreadsheet by stored ID
+  try {
+    const spreadsheetId = PropertiesService.getScriptProperties()
+      .getProperty('PROMPTLAB_SPREADSHEET_ID');
+    
+    if (spreadsheetId) {
+      spreadsheet = SpreadsheetApp.openById(spreadsheetId);
+      console.log('Opened spreadsheet by ID');
+    }
+  } catch (e) {
+    console.log('Could not open by ID:', e);
+  }
+  
+  // If no ID or failed, try by name
+  if (!spreadsheet) {
+    try {
+      const SPREADSHEET_NAME = 'PromptLab - Experiment Data';
+      const files = DriveApp.getFilesByName(SPREADSHEET_NAME);
+      if (files.hasNext()) {
+        spreadsheet = SpreadsheetApp.open(files.next());
+        // Store the ID for future use
+        PropertiesService.getScriptProperties()
+          .setProperty('PROMPTLAB_SPREADSHEET_ID', spreadsheet.getId());
+      }
+    } catch (e) {
+      console.error('Could not find spreadsheet by name:', e);
+    }
+  }
+  
+  // If still no spreadsheet, we have a problem
+  if (!spreadsheet) {
+    throw new Error('No spreadsheet found. Please run setupPromptLab() from the Apps Script editor first.');
   }
   
   // Get or create sheet
