@@ -1,0 +1,94 @@
+name: LearnBench Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run tests daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run tests
+      run: npm test
+      
+    - name: Upload test report
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-report-${{ matrix.node-version }}
+        path: tests/test-report.json
+    
+    - name: Test Report Summary
+      if: always()
+      run: |
+        if [ -f tests/test-report.json ]; then
+          echo "## Test Results Summary" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`json" >> $GITHUB_STEP_SUMMARY
+          cat tests/test-report.json | jq '.summary' >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+        fi
+
+  lint:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Use Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20.x'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Check code formatting
+      run: |
+        npx prettier --check "apps-script/**/*.{js,html}" || true
+    
+    - name: Validate JSON files
+      run: |
+        for file in $(find . -name "*.json" -not -path "./node_modules/*"); do
+          echo "Validating $file"
+          jq empty "$file" || exit 1
+        done
+
+  security:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Run security audit
+      run: npm audit --audit-level=high
+    
+    - name: Check for secrets
+      run: |
+        # Check for potential API keys or secrets
+        ! grep -r "AIza\|AKIA\|api_key\|apikey\|password\|secret" apps-script/ --exclude="*.md" || (echo "Potential secrets found!" && exit 1)
+    
+    - name: Validate NRIC hashing
+      run: |
+        # Ensure NRIC data is never stored in plain text
+        ! grep -r "nric.*=.*[0-9]{4}[A-Z]" apps-script/ || (echo "Plain NRIC data found!" && exit 1)

@@ -1,201 +1,221 @@
-# NERV LearnBench
+# LearnBench
 
-A web-based system for conducting human-AI teaming prompting experiments using Google Apps Script and the Gemini API.
+An intelligent web-based platform for conducting AI prompting experiments with automated cohort detection and comprehensive analytics.
 
 ## Overview
 
-NERV LearnBench provides a streamlined platform for:
-- Collecting prompts from experiment participants
-- Processing prompts through AI models (Gemini)
-- Logging all interactions to Google Sheets
-- Real-time display of AI responses
-- CodeMirror-based prompt editor with syntax highlighting
+LearnBench is designed for educational research, providing:
+- **Secure NRIC-based authentication** (Singapore students)
+- **Intelligent cohort detection** using clustering analysis
+- **Automatic monthly cohort IDs** with smart boundary handling
+- **Real-time AI responses** via Google Gemini API
+- **Comprehensive data logging** to Google Sheets
+- **Built-in security** and rate limiting
 
-## Architecture
+## Key Features
 
-- **Frontend**: HTML5 with CodeMirror editor
-- **Backend**: Google Apps Script
-- **Storage**: Google Sheets
-- **AI Model**: Google Gemini API (configurable)
-- **Hosting**: Google Apps Script Web App
+### 🔐 Privacy-First Authentication
+- Students log in with last 4 characters of NRIC
+- Converted to anonymous hash IDs
+- No personal data stored
 
-## Setup Instructions
+### 🎯 Smart Cohort Management
+- **Automatic detection** based on class schedule
+- **Monthly cohort IDs**: `YYYY-MM-X-DD` format (e.g., `2024-11-A-SS`)
+- **Clustering analysis** to detect in-class vs out-of-class submissions
+- **Month boundary handling** (Saturday Nov 30 → December cohort)
 
-### Method 1: Quick Setup (No Authentication Issues)
+### 📊 Class Schedule (Singapore)
+- **Cohort A**: Saturday/Sunday 9:00-12:00
+- **Cohort B**: Saturday/Sunday 13:00-16:00  
+- **Cohort C**: Monday/Wednesday 19:00-22:00
+- **Cohort D**: Tuesday/Thursday 19:00-22:00
 
-1. **Run the quick setup script**:
-   ```bash
-   node scripts/quick-setup.js
-   ```
-   This copies the first file to your clipboard.
+## Quick Start
 
-2. **Go to [script.google.com](https://script.google.com)** and create a new project
+### 1. Setup Google Apps Script Project
 
-3. **Paste** the clipboard content into Code.gs
-
-4. **Run the script again** for each file:
-   ```bash
-   node scripts/quick-setup.js  # Copies index.html → Create HTML file
-   node scripts/quick-setup.js  # Copies appsscript.json → See note below
-   ```
-   
-   **For appsscript.json**: Go to Project Settings (⚙️) → Check "Show appsscript.json"
-
-5. **Deploy** your Web App in the Apps Script editor
-
-### Method 2: Automated Setup with Clasp
-
-If authentication works for you:
 ```bash
+# Clone the repository
+git clone https://github.com/NERVsystems/learnbench.git
+cd learnbench
+
+# Option A: Automated setup (if clasp auth works)
 npm install
-npm run setup  # Login and create project
-npm run push   # Push files
-npm run deploy # Deploy web app
-```
-
-### Method 3: Manual Copy
-
-1. Go to [script.google.com](https://script.google.com)
-2. Create a new project
-3. Manually copy each file from `apps-script/` folder
-
-### 3. Configure Gemini API (Optional)
-
-To use the real Gemini API instead of mock responses:
-
-1. Enable the Generative Language API in [Google Cloud Console](https://console.cloud.google.com)
-2. Create an API key
-3. In Apps Script: File → Project Properties → Script Properties
-4. Add property: `GEMINI_API_KEY` with your API key
-5. Uncomment the `callGeminiAPIProduction` function in Code.gs
-6. Replace the mock implementation with the production version
-
-### 4. Deploy the Web App
-
-**Using Clasp**:
-```bash
+npm run setup
+npm run push
 npm run deploy
+
+# Option B: Quick manual setup
+node scripts/quick-setup.js  # Copies files to clipboard
+# Then paste into script.google.com
 ```
 
-**Or manually in Apps Script editor**:
+### 2. Configure Class Schedule
+
+In Google Apps Script editor, run:
+```javascript
+setupYourClassSchedule()
+```
+
+### 3. Get Gemini API Key (Free)
+
+1. Go to: https://makersuite.google.com/app/apikey
+2. Create API key (no credit card required)
+3. Add to Script Properties:
+```javascript
+PropertiesService.getScriptProperties()
+  .setProperty('GEMINI_API_KEY', 'your-key-here');
+```
+
+### 4. Deploy Web App
+
 1. Deploy → New deployment
-2. Configuration:
+2. Settings:
    - Type: Web app
    - Execute as: Me
-   - Who has access: Anyone (or "Anyone with the link" for restricted access)
-3. Click "Deploy"
-4. Copy the deployment URL
-
-### 5. Development Workflow
-
-**Watch for changes** (auto-push on save):
-```bash
-npm run watch  # Or: clasp push --watch
-```
-
-**View logs in real-time**:
-```bash
-npm run logs  # Or: clasp logs --tail
-```
-
-**Pull changes from Google**:
-```bash
-npm run pull  # Or: clasp pull
-```
-
-### 6. Access Permissions
-
-On first deployment, you'll need to:
-1. Review permissions
-2. Grant access to:
-   - Google Sheets (for data logging)
-   - External network access (for Gemini API)
+   - Access: Anyone with the link
+3. Copy the deployment URL
 
 ## Usage
 
-### For Experimenters
+### For Students
 
-1. Share the deployment URL with participants
-2. Monitor responses in the automatically created Google Sheet
-3. Export data for analysis
+1. **Access the URL** provided by instructor
+2. **Enter last 4 characters** of NRIC (e.g., "123A")
+3. **Write prompts** in the code editor
+4. **Submit** to see AI responses
+5. **Continue experimenting** - all data is logged automatically
 
-### For Participants
+### For Instructors
 
-1. Open the provided URL
-2. Enter participant ID and select cohort
-3. Write prompts in the CodeMirror editor
-4. Submit to see AI responses
-5. All interactions are automatically logged
+1. **Monitor in real-time** via Google Sheets
+2. **Run analytics** to identify patterns
+3. **Fix cold starts** with batch processing
+4. **Export data** for research analysis
 
-## Features
+## Advanced Features
 
-- **Rich Text Editor**: CodeMirror with line numbers and syntax highlighting
-- **Real-time Processing**: Immediate AI responses
-- **Automatic Logging**: All prompts and responses saved to Google Sheets
-- **Participant Tracking**: ID and cohort-based organization
-- **Response Metadata**: Timestamps, token counts, processing time
-- **Keyboard Shortcuts**: Ctrl+Enter to submit
+### Context Memory (Optional)
+Enable conversation memory between prompts:
+```javascript
+PropertiesService.getScriptProperties()
+  .setProperty('ENABLE_CONTEXT', 'true');
+```
+
+### Rate Limiting
+- 10 prompts/minute per student
+- 3-second minimum between prompts
+- Prevents system abuse
+
+### Cold Start Recovery
+Fix unassigned cohorts after initial deployment:
+```javascript
+fixColdStart()  // Run in Apps Script editor
+```
+
+## Testing
+
+### Run Tests in Google Apps Script
+```javascript
+runAllTests()        // Complete test suite
+runCoreTests()       // Essential functionality
+runIntegrationTests() // End-to-end scenarios
+```
+
+### Run Tests Locally
+```bash
+npm test            # Run all tests
+npm run test:watch  # Watch mode
+```
 
 ## Data Structure
 
-The Google Sheet logs the following columns:
-- Timestamp
-- Participant ID
-- Cohort ID
-- Prompt
-- AI Response
-- Model Used
-- Token Count
-- Processing Time (ms)
+Google Sheets columns:
+- `Timestamp` - Submission time
+- `Participant ID` - Anonymous hash (8 chars)
+- `Cohort ID` - Monthly cohort (e.g., "2024-11-A-SS")
+- `Prompt` - Student's input
+- `Model Response` - AI output
+- `Response Time (ms)` - Processing duration
+- `Status` - OK/FLAGGED/RATE_LIMITED
+- `Context Used` - true/false
+- `Session Type` - IN_CLASS/OUT_OF_CLASS/UNKNOWN
 
-## Customization
+## Security & Privacy
 
-### Adding New Cohorts
-Edit the cohort dropdown in `index.html`:
-```html
-<option value="cohort-d">Cohort D</option>
-```
-
-### Changing AI Models
-Modify the `callGeminiAPI` function to use different models or providers (OpenAI, Anthropic, local models).
-
-### UI Themes
-Update the CodeMirror theme in `index.html`:
-```javascript
-theme: 'monokai', // Change to 'default', 'dracula', etc.
-```
-
-## Security Considerations
-
-- API keys are stored in Script Properties (not in code)
-- Web app executes under deployer's account
-- Participant data is isolated in Google Sheets
-- No client-side API calls
+- ✅ NRIC hashed with SHA-256 + salt
+- ✅ No personal data stored
+- ✅ Rate limiting protection
+- ✅ Suspicious prompt detection
+- ✅ Secure API key storage
+- ✅ Audit trail for all submissions
 
 ## Troubleshooting
 
-### "Permission Denied" Error
-- Ensure the web app is deployed with proper access settings
-- Check that all required APIs are enabled
+### "Rate limit exceeded"
+- Wait 3 seconds between prompts
+- Check if student is submitting too rapidly
 
-### No AI Response
-- Verify Gemini API key is set correctly
-- Check quota limits in Google Cloud Console
-- Review execution logs in Apps Script editor
+### Cohorts showing as "UNASSIGNED"
+- Run `fixColdStart()` to batch-assign cohorts
+- Ensure class schedule is configured
 
-### Sheet Not Created
-- Ensure the script has Drive and Sheets permissions
-- Check for existing sheets with the same name
+### No AI responses
+- Verify Gemini API key is set
+- Check you're within free tier limits (60 req/min)
+- Enable mock responses for testing:
+  ```javascript
+  PropertiesService.getScriptProperties()
+    .setProperty('USE_MOCK_RESPONSES', 'true');
+  ```
 
-## Future Enhancements
+## Analytics & Reporting
 
-- Multiple prompt types/templates
-- Rubric-based scoring integration
-- Export to various formats (CSV, JSON)
-- A/B testing different models
-- Time pressure experiments
-- Multi-turn conversations
+### Weekly Clustering Report
+```javascript
+generateClusteringReport()
+```
+
+### Session Analysis
+```javascript
+analyzeSubmissionClustering('2024-11-A-SS', 7) // Last 7 days
+```
+
+## Development
+
+### File Structure
+```
+apps-script/
+├── index.html              # Main UI
+├── Code.js                 # Core logic
+├── clustering-analysis.js  # Cohort detection
+├── class-schedule-setup.js # Configuration
+├── tests.js               # Test suite
+└── test-runner.js         # Test utilities
+```
+
+### Key Functions
+- `generateParticipantHash()` - NRIC to anonymous ID
+- `generateMonthlyCohortId()` - Dynamic cohort IDs
+- `detectCohort()` - Smart cohort assignment
+- `processPrompt()` - Handle submissions
+- `classifySubmission()` - In-class detection
+- `fixColdStart()` - Batch cohort assignment
+
+## Contributing
+
+1. Fork the repository
+2. Create feature branch
+3. Run tests: `npm test`
+4. Submit pull request
 
 ## License
 
-MIT License - See LICENSE file for details
+MIT License - See LICENSE file
+
+## Support
+
+For issues or questions:
+- GitHub Issues: https://github.com/NERVsystems/learnbench/issues
+- Documentation: See `/tests/README.md` for testing guide
