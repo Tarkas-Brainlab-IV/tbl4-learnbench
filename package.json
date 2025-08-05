@@ -17,8 +17,9 @@
     "dev": "npm run watch",
     "status": "clasp login --status",
     "versions": "clasp versions",
-    "test": "node tests/run-tests.js",
+    "test": "node tests/run-tests-simple.js",
     "test:local": "node tests/run-tests.js",
+    "test:full": "node tests/run-tests.js",
     "test:gas": "clasp run runAllTests",
     "test:watch": "nodemon tests/run-tests.js"
   },
