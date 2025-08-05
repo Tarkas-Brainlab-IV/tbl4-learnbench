@@ -261,7 +261,7 @@ function generateAccessTokens(count, prefix = 'LB') {
   }
   
   // Save tokens to a secure sheet
-  const tokenSheet = SpreadsheetApp.create('LearnBench Access Tokens - ' + new Date().toISOString());
+  const tokenSheet = SpreadsheetApp.create('PromptLab Access Tokens - ' + new Date().toISOString());
   tokenSheet.getActiveSheet().getRange(1, 1, tokens.length, 1).setValues(tokens.map(t => [t]));
   
   console.log('Access tokens generated. Sheet URL:', tokenSheet.getUrl());

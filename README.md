@@ -1,10 +1,10 @@
-# LearnBench
+# PromptLab
 
 An intelligent web-based platform for conducting AI prompting experiments with automated cohort detection and comprehensive analytics.
 
 ## Overview
 
-LearnBench is designed for educational research, providing:
+PromptLab is designed for educational research, providing:
 - **Secure NRIC-based authentication** (Singapore students)
 - **Intelligent cohort detection** using clustering analysis
 - **Automatic monthly cohort IDs** with smart boundary handling
@@ -37,8 +37,8 @@ LearnBench is designed for educational research, providing:
 
 ```bash
 # Clone the repository
-git clone https://github.com/NERVsystems/learnbench.git
-cd learnbench
+git clone https://github.com/NERVsystems/promptlab.git
+cd promptlab
 
 # Option A: Automated setup (if clasp auth works)
 npm install
@@ -217,5 +217,5 @@ MIT License - See LICENSE file
 ## Support
 
 For issues or questions:
-- GitHub Issues: https://github.com/NERVsystems/learnbench/issues
+- GitHub Issues: https://github.com/NERVsystems/promptlab/issues
 - Documentation: See `/tests/README.md` for testing guide

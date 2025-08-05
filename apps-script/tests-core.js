@@ -1,9 +1,9 @@
-// Core LearnBench Tests - Simplified for easier debugging
+// Core PromptLab Tests - Simplified for easier debugging
 // These tests focus on the core functionality without complex mocking
 
 // Test runner function
 function runCoreTests() {
-  console.log('🧪 Running LearnBench Core Tests...\n');
+  console.log('🧪 Running PromptLab Core Tests...\n');
   
   const results = {
     total: 0,
@@ -193,7 +193,7 @@ function logCoreTestResults(results) {
 
 // Quick validation function
 function validateSetup() {
-  console.log('🔍 Validating LearnBench setup...\n');
+  console.log('🔍 Validating PromptLab setup...\n');
   
   const checks = [];
   

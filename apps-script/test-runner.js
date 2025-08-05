@@ -1,10 +1,10 @@
-// Test Runner for LearnBench
+// Test Runner for PromptLab
 // This file provides menu items and functions to run tests in Google Apps Script
 
 // Add menu items to run tests
 function onOpen() {
   const ui = SpreadsheetApp.getUi();
-  ui.createMenu('LearnBench Tests')
+  ui.createMenu('PromptLab Tests')
     .addItem('Run All Tests', 'runTestsFromMenu')
     .addItem('Run NRIC Tests', 'runNRICTests')
     .addItem('Run Cohort Tests', 'runCohortTests')
@@ -76,7 +76,7 @@ function exportTestReport() {
   const report = generateTestReport(data);
   
   // Create a new document with the report
-  const doc = DocumentApp.create('LearnBench Test Report - ' + new Date().toLocaleDateString());
+  const doc = DocumentApp.create('PromptLab Test Report - ' + new Date().toLocaleDateString());
   doc.getBody().setText(report);
   
   const ui = SpreadsheetApp.getUi();
@@ -150,9 +150,9 @@ function sendTestFailureNotification(results) {
   const email = PropertiesService.getScriptProperties().getProperty('TEST_NOTIFICATION_EMAIL');
   if (!email) return;
   
-  const subject = `LearnBench Test Failure: ${results.failed} tests failed`;
+  const subject = `PromptLab Test Failure: ${results.failed} tests failed`;
   const body = `
-LearnBench automated tests have failed.
+PromptLab automated tests have failed.
 
 Summary:
 - Total Tests: ${results.total}

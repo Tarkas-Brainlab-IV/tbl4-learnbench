@@ -13,7 +13,7 @@ const TestFramework = {
   // Run all tests
   runAll() {
     this.results = [];
-    console.log('🧪 Running LearnBench Tests...\n');
+    console.log('🧪 Running PromptLab Tests...\n');
     
     const startTime = new Date().getTime();
     let passed = 0;

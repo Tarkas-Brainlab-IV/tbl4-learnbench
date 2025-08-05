@@ -2,7 +2,7 @@
 function doGet() {
   try {
     return HtmlService.createHtmlOutputFromFile('index')
-      .setTitle('LearnBench - AI Prompting Practice')
+      .setTitle('Session')
       .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
       .addMetaTag('viewport', 'width=device-width, initial-scale=1');
   } catch (error) {
@@ -26,7 +26,7 @@ function generateParticipantHash(nricLast4) {
     }
     
     // Add a salt for extra security
-    const salt = 'LearnBench2024';
+    const salt = 'PromptLab2024';
     const dataToHash = salt + normalizedNric;
     
     // Generate SHA-256 hash
@@ -427,7 +427,7 @@ function processPrompt(data) {
 
 // Get or create the logging spreadsheet
 function getOrCreateSheet() {
-  const SPREADSHEET_NAME = 'LearnBench - Prompt Data';
+  const SPREADSHEET_NAME = 'PromptLab - Prompt Data';
   const SHEET_NAME = 'Prompts';
   
   let spreadsheet;

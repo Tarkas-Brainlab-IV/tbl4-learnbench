@@ -1,11 +1,11 @@
 {
-  "name": "learnbench",
+  "name": "promptlab",
   "version": "1.0.0",
   "description": "Intelligent AI prompting experiment platform with automated cohort detection",
   "scripts": {
     "install:clasp": "npm install -g @google/clasp",
     "login": "clasp login",
-    "create": "clasp create --title 'LearnBench' --type webapp --rootDir ./apps-script",
+    "create": "clasp create --title 'PromptLab' --type webapp --rootDir ./apps-script",
     "push": "clasp push",
     "pull": "clasp pull",
     "open": "clasp open",
@@ -28,7 +28,7 @@
     "ai",
     "prompting"
   ],
-  "author": "LearnBench Team",
+  "author": "PromptLab Research Team",
   "license": "MIT",
   "devDependencies": {
     "@google/clasp": "^2.4.2",

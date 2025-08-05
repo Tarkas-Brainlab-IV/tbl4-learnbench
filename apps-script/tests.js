@@ -1,4 +1,4 @@
-// LearnBench Test Suite
+// PromptLab Test Suite
 // Run this file in the Google Apps Script editor to test all functionality
 
 // Initialize mocks (will be provided by the environment)

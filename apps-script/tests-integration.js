@@ -1,8 +1,8 @@
-// Integration Tests for LearnBench
+// Integration Tests for PromptLab
 // These tests simulate real user workflows
 
 function runIntegrationTests() {
-  console.log('🔄 Running LearnBench Integration Tests...\n');
+  console.log('🔄 Running PromptLab Integration Tests...\n');
   
   const results = {
     scenarios: [],

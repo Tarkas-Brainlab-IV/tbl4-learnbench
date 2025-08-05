@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-// Local test runner for LearnBench
+// Local test runner for PromptLab
 // This simulates the Google Apps Script environment locally
 
 const fs = require('fs');
@@ -17,7 +17,7 @@ const colors = {
   cyan: '\x1b[36m'
 };
 
-console.log(`${colors.cyan}🧪 LearnBench Local Test Runner${colors.reset}\n`);
+console.log(`${colors.cyan}🧪 PromptLab Local Test Runner${colors.reset}\n`);
 
 // Load test files
 function loadTestFiles() {
