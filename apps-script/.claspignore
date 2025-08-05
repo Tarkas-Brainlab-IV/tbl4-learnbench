@@ -1,0 +1,13 @@
+# Ignore files that shouldn't be pushed to Apps Script
+**/**
+!*.js
+!*.gs
+!*.html
+!appsscript.json
+
+# Ignore node_modules
+node_modules/**
+
+# Ignore test files
+**/*test*
+**/*spec*

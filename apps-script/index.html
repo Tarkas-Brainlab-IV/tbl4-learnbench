@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LearnBench - AI Prompting Practice</title>
+  
+  <!-- CodeMirror CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/codemirror.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/theme/monokai.min.css">
+  
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    
+    .container {
+      background: white;
+      border-radius: 8px;
+      padding: 30px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+    }
+    
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 600;
+      color: #444;
+    }
+    
+    input[type="text"], input[type="email"], select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    
+    .editor-container {
+      margin-bottom: 20px;
+    }
+    
+    .CodeMirror {
+      height: 300px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    
+    button {
+      padding: 12px 24px;
+      font-size: 16px;
+      font-weight: 600;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .submit-btn {
+      background-color: #4CAF50;
+      color: white;
+      flex: 1;
+    }
+    
+    .submit-btn:hover {
+      background-color: #45a049;
+    }
+    
+    .submit-btn:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+    
+    .clear-btn {
+      background-color: #f44336;
+      color: white;
+    }
+    
+    .clear-btn:hover {
+      background-color: #da190b;
+    }
+    
+    .output-section {
+      margin-top: 30px;
+      padding-top: 30px;
+      border-top: 1px solid #eee;
+    }
+    
+    .output-container {
+      background-color: #f9f9f9;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 20px;
+      min-height: 100px;
+      white-space: pre-wrap;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    
+    .loading {
+      text-align: center;
+      color: #666;
+    }
+    
+    .error {
+      color: #f44336;
+      background-color: #ffebee;
+      padding: 10px;
+      border-radius: 4px;
+      margin-top: 10px;
+    }
+    
+    .success {
+      color: #4CAF50;
+      background-color: #e8f5e9;
+      padding: 10px;
+      border-radius: 4px;
+      margin-top: 10px;
+    }
+    
+    .metadata {
+      font-size: 12px;
+      color: #666;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>LearnBench</h1>
+    <p class="subtitle">AI Prompting Practice Platform</p>
+    
+    <!-- Login Screen -->
+    <div id="loginScreen">
+      <div class="form-group">
+        <label for="nricInput">Enter last 4 characters of your NRIC:</label>
+        <input type="text" id="nricInput" placeholder="e.g., 123A" maxlength="4" required 
+               style="text-transform: uppercase; font-size: 20px; text-align: center; letter-spacing: 2px;">
+        <small style="color: #666; display: block; margin-top: 5px;">Used to generate a random ID • Not stored • Not linked to your identity</small>
+      </div>
+      
+      <button id="loginBtn" class="submit-btn" style="width: 100%; margin-top: 20px;">
+        Start Session
+      </button>
+    </div>
+    
+    <!-- Main Interface (hidden initially) -->
+    <div id="mainInterface" style="display: none;">
+      <div style="text-align: right; margin-bottom: 20px; color: #666;">
+        <span id="sessionInfo"></span>
+        <button id="logoutBtn" style="margin-left: 10px; padding: 5px 15px; background: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer;">
+          End Session
+        </button>
+      </div>
+    
+      <div class="editor-container">
+        <label for="prompt">Enter your prompt:</label>
+        <textarea id="prompt" placeholder="Type your prompt here..."></textarea>
+      </div>
+      
+      <div class="button-group">
+        <button id="submit" class="submit-btn">Submit Prompt</button>
+        <button id="clear" class="clear-btn">Clear</button>
+      </div>
+      
+      <div id="message"></div>
+      
+      <div class="output-section">
+        <h2>AI Response</h2>
+        <div id="output" class="output-container">
+          <span style="color: #999;">Waiting for prompt submission...</span>
+        </div>
+        <div id="metadata" class="metadata"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CodeMirror JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/markdown/markdown.min.js"></script>
+  
+  <script>
+    let editor;
+    let sessionData = {
+      participantId: null,
+      cohortId: 'default'
+    };
+    
+    window.addEventListener('load', () => {
+      // Initialize login handlers
+      setupLogin();
+      
+      // Focus on NRIC input
+      document.getElementById('nricInput').focus();
+    });
+    
+    function setupLogin() {
+      const nricInput = document.getElementById('nricInput');
+      const loginBtn = document.getElementById('loginBtn');
+      
+      // Auto-uppercase as they type
+      nricInput.addEventListener('input', (e) => {
+        e.target.value = e.target.value.toUpperCase();
+      });
+      
+      // Enter key to login
+      nricInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && nricInput.value.length === 4) {
+          handleLogin();
+        }
+      });
+      
+      // Login button click
+      loginBtn.addEventListener('click', handleLogin);
+    }
+    
+    function handleLogin() {
+      const nricLast4 = document.getElementById('nricInput').value.toUpperCase();
+      
+      if (nricLast4.length !== 4) {
+        alert('Please enter exactly 4 characters');
+        return;
+      }
+      
+      // Generate hash from NRIC
+      google.script.run
+        .withSuccessHandler(handleLoginSuccess)
+        .withFailureHandler(handleLoginError)
+        .generateParticipantHash(nricLast4);
+    }
+    
+    function handleLoginSuccess(result) {
+      sessionData.participantId = result.hash;
+      
+      // Hide login screen
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('mainInterface').style.display = 'block';
+      
+      // Show session info
+      document.getElementById('sessionInfo').textContent = `Session: ${sessionData.participantId}`;
+      
+      // Initialize main interface
+      initializeMainInterface();
+    }
+    
+    function handleLoginError(error) {
+      alert('Login failed: ' + error);
+    }
+    
+    function initializeMainInterface() {
+      // Initialize CodeMirror
+      editor = CodeMirror.fromTextArea(document.getElementById('prompt'), {
+        lineNumbers: true,
+        mode: 'markdown',
+        theme: 'monokai',
+        lineWrapping: true,
+        autofocus: true
+      });
+      
+      // Submit button handler
+      document.getElementById('submit').addEventListener('click', submitPrompt);
+      
+      // Clear button handler
+      document.getElementById('clear').addEventListener('click', () => {
+        editor.setValue('');
+        document.getElementById('output').innerHTML = '<span style="color: #999;">Waiting for prompt submission...</span>';
+        document.getElementById('metadata').innerHTML = '';
+        clearMessage();
+      });
+      
+      // Logout button
+      document.getElementById('logoutBtn').addEventListener('click', () => {
+        if (confirm('End your session?')) {
+          location.reload();
+        }
+      });
+      
+      // Enable Enter key to submit when not in editor
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && e.ctrlKey) {
+          submitPrompt();
+        }
+      });
+    }
+    
+    function submitPrompt() {
+      const prompt = editor.getValue().trim();
+      
+      // Validation
+      if (!prompt) {
+        showMessage('Please enter a prompt', 'error');
+        return;
+      }
+      
+      // Disable submit button and show loading
+      const submitBtn = document.getElementById('submit');
+      submitBtn.disabled = true;
+      document.getElementById('output').innerHTML = '<div class="loading">Processing your prompt...</div>';
+      document.getElementById('metadata').innerHTML = '';
+      clearMessage();
+      
+      // Call server function
+      google.script.run
+        .withSuccessHandler(handleSuccess)
+        .withFailureHandler(handleError)
+        .processPrompt({
+          participantId: sessionData.participantId,
+          cohortId: sessionData.cohortId,
+          prompt: prompt
+        });
+    }
+    
+    function handleSuccess(response) {
+      document.getElementById('submit').disabled = false;
+      
+      if (response.success) {
+        document.getElementById('output').textContent = response.output;
+        document.getElementById('metadata').innerHTML = `
+          <strong>Response time:</strong> ${new Date(response.timestamp).toLocaleString()}
+        `;
+        showMessage('Prompt processed successfully!', 'success');
+        
+        // Clear the editor for next prompt
+        setTimeout(() => {
+          editor.setValue('');
+          clearMessage();
+        }, 2000);
+      } else {
+        handleError(response.error || 'Unknown error occurred');
+      }
+    }
+    
+    function handleError(error) {
+      document.getElementById('submit').disabled = false;
+      document.getElementById('output').innerHTML = '<span style="color: #f44336;">Error processing prompt. Please try again.</span>';
+      showMessage('Error: ' + error, 'error');
+      console.error('Full error:', error);
+      
+      // More detailed error display
+      if (error.stack) {
+        document.getElementById('output').innerHTML += '<br><br><small>' + error.stack + '</small>';
+      }
+    }
+    
+    function showMessage(text, type) {
+      const messageDiv = document.getElementById('message');
+      messageDiv.className = type;
+      messageDiv.textContent = text;
+    }
+    
+    function clearMessage() {
+      document.getElementById('message').className = '';
+      document.getElementById('message').textContent = '';
+    }
+  </script>
+</body>
+</html>

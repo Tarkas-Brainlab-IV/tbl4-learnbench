@@ -1,0 +1,16 @@
+#!/bin/bash
+
+echo "Testing Gemini API integration..."
+echo ""
+echo "1. Open: https://script.google.com/d/1QeoELCzLgZ7YgqrzeKzWE0oBncJOsOreU-6O_q9YR-qD4ul6Oe3pT5So/edit"
+echo ""
+echo "2. In the function dropdown, select: testFullProcess"
+echo ""
+echo "3. Click Run"
+echo ""
+echo "4. Check the execution log (View → Executions)"
+echo ""
+echo "If you see the mock response, then:"
+echo "- Make sure GEMINI_API_KEY is set in Script Properties"
+echo "- Make sure you redeployed with 'New version'"
+echo "- Try the test deployment URL (ends with /dev)"

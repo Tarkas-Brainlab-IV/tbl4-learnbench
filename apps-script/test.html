@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <title>Test Page</title>
+</head>
+<body>
+  <h1>NERV LearnBench - Test Page</h1>
+  <p>If you can see this, the web app is working!</p>
+  <button onclick="testConnection()">Test Server Connection</button>
+  <div id="result"></div>
+  
+  <script>
+    function testConnection() {
+      document.getElementById('result').innerHTML = 'Testing...';
+      google.script.run
+        .withSuccessHandler(function(result) {
+          document.getElementById('result').innerHTML = 'Success: ' + result;
+        })
+        .withFailureHandler(function(error) {
+          document.getElementById('result').innerHTML = 'Error: ' + error;
+        })
+        .testFunction();
+    }
+  </script>
+</body>
+</html>
