@@ -24,8 +24,8 @@ function saveDemographics(data) {
       'true'  // Consent given
     ];
     
-    // Append to sheet
-    sheet.appendRow(row);
+    // Safely append to sheet
+    safeAppendRow(sheet, row);
     
     // Log the collection
     console.log('Demographics saved for participant:', data.participantId);
@@ -59,7 +59,7 @@ function recordConsent(participantId) {
       'true'   // Consent given
     ];
     
-    sheet.appendRow(row);
+    safeAppendRow(sheet, row);
     
     console.log('Consent recorded for participant:', participantId);
     
@@ -73,56 +73,8 @@ function recordConsent(participantId) {
 
 // Get or create demographics sheet
 function getOrCreateDemographicsSheet() {
-  const SHEET_NAME = 'Demographics';
-  
-  // Get the main spreadsheet
-  const spreadsheet = getOrCreateSpreadsheet();
-  
-  // Check if demographics sheet exists
-  let sheet = spreadsheet.getSheetByName(SHEET_NAME);
-  
-  if (!sheet) {
-    // Create new sheet
-    sheet = spreadsheet.insertSheet(SHEET_NAME);
-    
-    // Set up headers
-    const headers = [
-      'Timestamp',
-      'Participant ID',
-      'Age Group',
-      'Gender', 
-      'Education',
-      'Discipline',
-      'English Proficiency',
-      'Coding Experience',
-      'AI Usage',
-      'Military Experience',
-      'Demographics Provided',
-      'Consent Given'
-    ];
-    
-    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
-    
-    // Format header row
-    sheet.getRange(1, 1, 1, headers.length)
-      .setBackground('#f0f0f0')
-      .setFontWeight('bold');
-    
-    // Set column widths
-    sheet.setColumnWidth(1, 150); // Timestamp
-    sheet.setColumnWidth(2, 100); // Participant ID
-    
-    // Protect the sheet (only owner can edit)
-    const protection = sheet.protect().setDescription('Demographics data - restricted access');
-    protection.removeEditors(protection.getEditors());
-    if (Session.getActiveUser()) {
-      protection.addEditor(Session.getActiveUser());
-    }
-    
-    console.log('Created demographics sheet with headers');
-  }
-  
-  return sheet;
+  // Delegate to the robust sheet manager
+  return getDemographicsSheet();
 }
 
 // Check if participant has already provided demographics

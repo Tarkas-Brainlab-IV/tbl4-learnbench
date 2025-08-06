@@ -399,18 +399,19 @@ function processPrompt(data) {
     }
     
     // Log to spreadsheet with smart cohort and status
-    sheet.appendRow([
+    const rowData = [
       timestamp,
       data.participantId,
       cohortInfo.cohort, // Smart cohort detection
       data.prompt,
       geminiResponse.output,
-      geminiResponse.model,
-      geminiResponse.tokens,
       geminiResponse.processingTime,
       cohortInfo.inClass ? 'IN-CLASS' : 'OUT-OF-CLASS', // Status
       cohortInfo.note || '' // Additional notes
-    ]);
+    ];
+    
+    // Use safe append to handle large content
+    safeAppendRow(sheet, rowData);
     
     console.log('Successfully logged to sheet with cohort:', cohortInfo.cohort);
     
@@ -458,73 +459,8 @@ function processPrompt(data) {
 
 // Get or create the logging spreadsheet
 function getOrCreateSheet() {
-  const SHEET_NAME = 'Prompts';
-  let spreadsheet;
-  
-  // First try to get spreadsheet by stored ID
-  try {
-    const spreadsheetId = PropertiesService.getScriptProperties()
-      .getProperty('PROMPTLAB_SPREADSHEET_ID');
-    
-    if (spreadsheetId) {
-      spreadsheet = SpreadsheetApp.openById(spreadsheetId);
-      console.log('Opened spreadsheet by ID');
-    }
-  } catch (e) {
-    console.log('Could not open by ID:', e);
-  }
-  
-  // If no ID or failed, try by name
-  if (!spreadsheet) {
-    try {
-      const SPREADSHEET_NAME = 'PromptLab - Experiment Data';
-      const files = DriveApp.getFilesByName(SPREADSHEET_NAME);
-      if (files.hasNext()) {
-        spreadsheet = SpreadsheetApp.open(files.next());
-        // Store the ID for future use
-        PropertiesService.getScriptProperties()
-          .setProperty('PROMPTLAB_SPREADSHEET_ID', spreadsheet.getId());
-      }
-    } catch (e) {
-      console.error('Could not find spreadsheet by name:', e);
-    }
-  }
-  
-  // If still no spreadsheet, we have a problem
-  if (!spreadsheet) {
-    throw new Error('No spreadsheet found. Please run setupPromptLab() from the Apps Script editor first.');
-  }
-  
-  // Get or create sheet
-  let sheet = spreadsheet.getSheetByName(SHEET_NAME);
-  if (!sheet) {
-    sheet = spreadsheet.insertSheet(SHEET_NAME);
-    
-    // Add headers
-    sheet.getRange(1, 1, 1, 10).setValues([[
-      'Timestamp',
-      'Participant ID',
-      'Cohort ID',
-      'Prompt',
-      'AI Response',
-      'Model',
-      'Token Count',
-      'Processing Time (ms)',
-      'Status',
-      'Notes'
-    ]]);
-    
-    // Format headers
-    sheet.getRange(1, 1, 1, 10)
-      .setFontWeight('bold')
-      .setBackground('#4CAF50')
-      .setFontColor('#FFFFFF');
-    
-    // Auto-resize columns
-    sheet.autoResizeColumns(1, 10);
-  }
-  
-  return sheet;
+  // Delegate to the robust sheet manager
+  return getLogSheet();
 }
 
 // Call Gemini API with context support
