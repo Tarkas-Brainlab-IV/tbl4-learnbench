@@ -4,35 +4,136 @@
   <base target="_top">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Session</title>
+  <title>PromptLab Session</title>
   
   <!-- CodeMirror CSS -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/codemirror.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/theme/monokai.min.css">
   
+  <!-- Google Fonts for better console typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  
   <style>
+    /* CSS Variables for theming */
+    :root {
+      --bg-primary: #f5f5f5;
+      --bg-secondary: white;
+      --text-primary: #1a1a1a;
+      --text-secondary: #666;
+      --text-muted: #888;
+      --border-color: #ddd;
+      --border-dark: #333;
+      --shadow: rgba(0,0,0,0.1);
+      --button-success: #4CAF50;
+      --button-success-hover: #45a049;
+      --button-danger: #f44336;
+      --button-danger-hover: #da190b;
+      --output-bg: #fafafa;
+      --code-bg: #f9f9f9;
+      --loading-color: #666;
+      --error-bg: #ffebee;
+      --success-bg: #e8f5e9;
+    }
+    
+    /* Dark theme */
+    [data-theme="dark"] {
+      --bg-primary: #1a1a1a;
+      --bg-secondary: #2d2d2d;
+      --text-primary: #e0e0e0;
+      --text-secondary: #b0b0b0;
+      --text-muted: #808080;
+      --border-color: #404040;
+      --border-dark: #606060;
+      --shadow: rgba(0,0,0,0.3);
+      --button-success: #45a049;
+      --button-success-hover: #4CAF50;
+      --button-danger: #da190b;
+      --button-danger-hover: #f44336;
+      --output-bg: #252525;
+      --code-bg: #2a2a2a;
+      --loading-color: #b0b0b0;
+      --error-bg: #3d1f1f;
+      --success-bg: #1f3d1f;
+    }
+    
+    /* Smooth transition when switching themes */
+    * {
+      transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    }
+    
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 16px;
       max-width: 1200px;
       margin: 0 auto;
       padding: 20px;
-      background-color: #f5f5f5;
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
     }
     
     .container {
-      background: white;
+      background: var(--bg-secondary);
       border-radius: 8px;
       padding: 30px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 10px var(--shadow);
+      position: relative;
+    }
+    
+    /* Theme switcher */
+    .theme-switcher {
+      position: absolute;
+      top: 20px;
+      left: 20px;  /* Changed from right to left to avoid overlap */
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      background: var(--bg-primary);
+      padding: 8px 12px;
+      border-radius: 20px;
+      border: 1px solid var(--border-color);
+      z-index: 100;
+    }
+    
+    .theme-switcher button {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      padding: 6px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.2s;
+      color: var(--text-secondary);
+    }
+    
+    .theme-switcher button:hover {
+      background: var(--border-color);
+    }
+    
+    .theme-switcher button.active {
+      background: var(--button-success);
+      color: white;
+    }
+    
+    .theme-switcher svg {
+      width: 20px;
+      height: 20px;
     }
     
     h1 {
-      color: #333;
+      color: var(--text-primary);
       margin-bottom: 10px;
     }
     
+    h2 {
+      color: var(--text-primary);
+    }
+    
     .subtitle {
-      color: #666;
+      color: var(--text-secondary);
       margin-bottom: 30px;
     }
     
@@ -42,29 +143,78 @@
     
     label {
       display: block;
-      margin-bottom: 5px;
-      font-weight: 600;
-      color: #444;
+      margin-bottom: 8px;
+      font-weight: 700;
+      font-size: 18px;
+      color: var(--text-primary);
+      letter-spacing: -0.01em;
     }
     
     input[type="text"], input[type="email"], select {
       width: 100%;
       padding: 10px;
-      border: 1px solid #ddd;
+      border: 1px solid var(--border-color);
       border-radius: 4px;
       font-size: 16px;
       box-sizing: border-box;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+    }
+    
+    input[type="text"]:focus, input[type="email"]:focus, select:focus {
+      outline: none;
+      border-color: var(--button-success);
     }
     
     .editor-container {
       margin-bottom: 20px;
     }
     
+    /* Hide the original textarea once CodeMirror is applied */
+    .editor-container textarea#prompt {
+      display: none !important;
+    }
+    
+    /* Prevent duplicate CodeMirror instances */
+    .editor-container .CodeMirror ~ .CodeMirror {
+      display: none !important;
+    }
+    
     .CodeMirror {
       height: 300px;
-      border: 1px solid #ddd;
+      border: 2px solid var(--border-dark);
       border-radius: 4px;
-      font-size: 14px;
+      font-size: 16px;
+      font-family: 'JetBrains Mono', 'SF Mono', Monaco, 'Cascadia Code', monospace;
+      font-weight: 500;
+      background: var(--code-bg);
+    }
+    
+    /* Dark theme CodeMirror adjustments */
+    [data-theme="dark"] .CodeMirror {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+    }
+    
+    [data-theme="dark"] .CodeMirror-gutters {
+      background: var(--bg-secondary);
+      border-right-color: var(--border-color);
+    }
+    
+    [data-theme="dark"] .CodeMirror-linenumber {
+      color: var(--text-muted);
+    }
+    
+    [data-theme="dark"] .CodeMirror-cursor {
+      border-left-color: var(--text-primary);
+    }
+    
+    .CodeMirror-lines {
+      padding: 8px 0;
+    }
+    
+    .CodeMirror pre.CodeMirror-line {
+      color: var(--text-primary);
     }
     
     .button-group {
@@ -84,13 +234,13 @@
     }
     
     .submit-btn {
-      background-color: #4CAF50;
+      background-color: var(--button-success);
       color: white;
       flex: 1;
     }
     
     .submit-btn:hover {
-      background-color: #45a049;
+      background-color: var(--button-success-hover);
     }
     
     .submit-btn:disabled {
@@ -99,48 +249,50 @@
     }
     
     .clear-btn {
-      background-color: #f44336;
+      background-color: var(--button-danger);
       color: white;
     }
     
     .clear-btn:hover {
-      background-color: #da190b;
+      background-color: var(--button-danger-hover);
     }
     
     .output-section {
       margin-top: 30px;
       padding-top: 30px;
-      border-top: 1px solid #eee;
+      border-top: 1px solid var(--border-color);
     }
     
     .output-container {
-      background-color: #f9f9f9;
-      border: 1px solid #ddd;
+      background-color: var(--output-bg);
+      border: 2px solid var(--border-dark);
       border-radius: 4px;
       padding: 20px;
-      min-height: 100px;
+      min-height: 120px;
       white-space: pre-wrap;
-      font-family: 'Courier New', monospace;
-      font-size: 14px;
-      line-height: 1.5;
+      font-family: 'JetBrains Mono', 'SF Mono', Monaco, 'Cascadia Code', monospace;
+      font-size: 16px;
+      font-weight: 500;
+      line-height: 1.6;
+      color: var(--text-primary);
     }
     
     .loading {
       text-align: center;
-      color: #666;
+      color: var(--loading-color);
     }
     
     .error {
-      color: #f44336;
-      background-color: #ffebee;
+      color: var(--button-danger);
+      background-color: var(--error-bg);
       padding: 10px;
       border-radius: 4px;
       margin-top: 10px;
     }
     
     .success {
-      color: #4CAF50;
-      background-color: #e8f5e9;
+      color: var(--button-success);
+      background-color: var(--success-bg);
       padding: 10px;
       border-radius: 4px;
       margin-top: 10px;
@@ -148,13 +300,413 @@
     
     .metadata {
       font-size: 12px;
-      color: #666;
+      color: var(--text-secondary);
       margin-top: 10px;
+    }
+    
+    /* Demographics Full Screen Styles */
+    .demographics-screen {
+      display: none; /* Hidden by default */
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--bg-primary);
+      z-index: 10000;
+      overflow-y: auto;
+      padding: 20px;
+    }
+    
+    .demographics-screen.active {
+      display: block; /* Show when active */
+    }
+    
+    .demographics-container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: var(--bg-secondary);
+      border-radius: 8px;
+      padding: 40px;
+      box-shadow: 0 2px 10px var(--shadow);
+    }
+    
+    .demographics-container h1 {
+      color: var(--text-primary);
+      margin-bottom: 10px;
+      font-size: 28px;
+      font-weight: 700;
+    }
+    
+    .demographics-container .subtitle {
+      color: var(--text-secondary);
+      margin-bottom: 30px;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+    
+    .demographic-field {
+      margin-bottom: 20px;
+    }
+    
+    .demographic-field label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+    
+    .demographic-field .optional-tag {
+      color: var(--text-muted);
+      font-weight: 400;
+      font-size: 12px;
+      margin-left: 6px;
+      font-style: italic;
+    }
+    
+    .demographic-field select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-size: 14px;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    
+    .demographic-field select:hover {
+      border-color: var(--border-dark);
+    }
+    
+    .demographic-field select:focus {
+      outline: none;
+      border-color: var(--button-success);
+    }
+    
+    .radio-group {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+    
+    .radio-option {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .radio-option input[type="radio"] {
+      width: 16px;
+      height: 16px;
+      margin: 0;
+      cursor: pointer;
+    }
+    
+    .radio-option label {
+      font-size: 14px;
+      font-weight: 400;
+      cursor: pointer;
+      margin-bottom: 0;
+    }
+    
+    .consent-section {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 20px;
+      margin: 25px 0;
+    }
+    
+    .consent-section h3 {
+      font-size: 16px;
+      margin-bottom: 12px;
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+    
+    .consent-text {
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+      margin-bottom: 15px;
+    }
+    
+    .consent-text p {
+      margin-bottom: 10px;
+    }
+    
+    .consent-text p:last-child {
+      margin-bottom: 0;
+    }
+    
+    .consent-checkbox {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-top: 15px;
+    }
+    
+    .consent-checkbox input[type="checkbox"] {
+      margin-top: 2px;
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    
+    .consent-checkbox label {
+      font-size: 14px;
+      line-height: 1.4;
+      cursor: pointer;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+    
+    .modal-buttons {
+      display: flex;
+      gap: 12px;
+      margin-top: 25px;
+      justify-content: flex-end;
+    }
+    
+    .modal-buttons button {
+      padding: 10px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn-skip {
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+    }
+    
+    .btn-skip:hover {
+      background: var(--bg-primary);
+      border-color: var(--border-dark);
+    }
+    
+    .btn-continue {
+      background: var(--button-success);
+      color: white;
+    }
+    
+    .btn-continue:hover:not(:disabled) {
+      background: var(--button-success-hover);
+    }
+    
+    .btn-continue:disabled {
+      background: var(--border-color);
+      cursor: not-allowed;
+      opacity: 0.6;
     }
   </style>
 </head>
 <body>
+  <!-- Demographics Screen (hidden initially) -->
+  <div id="demographicsModal" class="demographics-screen">
+    <div class="demographics-container">
+      <h1>Help Us Improve Your Experience</h1>
+      <p class="subtitle">
+        You're doing great! Before we continue, we'd appreciate learning a bit about you to better understand how different backgrounds interact with AI. 
+        This optional survey takes just 2 minutes and helps improve the experience for everyone.
+      </p>
+      
+      <form id="demographicsForm">
+        <!-- Age -->
+        <div class="demographic-field">
+          <label for="ageBand">
+            Age
+            <span class="optional-tag">(optional)</span>
+          </label>
+          <select id="ageBand" name="ageBand">
+            <option value="">Prefer not to say</option>
+            <option value="18-24">18-24</option>
+            <option value="25-34">25-34</option>
+            <option value="35-44">35-44</option>
+            <option value="45+">45+</option>
+          </select>
+        </div>
+        
+        <!-- Gender -->
+        <div class="demographic-field">
+          <label>
+            Gender
+            <span class="optional-tag">(optional)</span>
+          </label>
+          <div class="radio-group">
+            <div class="radio-option">
+              <input type="radio" id="genderMale" name="gender" value="male">
+              <label for="genderMale">Male</label>
+            </div>
+            <div class="radio-option">
+              <input type="radio" id="genderFemale" name="gender" value="female">
+              <label for="genderFemale">Female</label>
+            </div>
+            <div class="radio-option">
+              <input type="radio" id="genderOther" name="gender" value="other">
+              <label for="genderOther">Other</label>
+            </div>
+            <div class="radio-option">
+              <input type="radio" id="genderNone" name="gender" value="" checked>
+              <label for="genderNone">Prefer not to say</label>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Education -->
+        <div class="demographic-field">
+          <label for="qualification">
+            Education
+            <span class="optional-tag">(optional)</span>
+          </label>
+          <select id="qualification" name="qualification">
+            <option value="">Prefer not to say</option>
+            <option value="secondary">Secondary School</option>
+            <option value="polytechnic">Polytechnic/ITE</option>
+            <option value="bachelor">Bachelor's Degree</option>
+            <option value="master">Master's Degree</option>
+            <option value="phd">PhD</option>
+          </select>
+        </div>
+        
+        <!-- Discipline -->
+        <div class="demographic-field">
+          <label for="discipline">
+            Discipline
+            <span class="optional-tag">(optional)</span>
+          </label>
+          <select id="discipline" name="discipline">
+            <option value="">Prefer not to say</option>
+            <option value="stem">STEM (Science, Technology, Engineering, Math)</option>
+            <option value="non-stem">Non-STEM</option>
+            <option value="mixed">Mixed/Interdisciplinary</option>
+          </select>
+        </div>
+        
+        <!-- English Proficiency -->
+        <div class="demographic-field">
+          <label for="englishProficiency">
+            English Proficiency
+            <span class="optional-tag">(optional)</span>
+          </label>
+          <select id="englishProficiency" name="englishProficiency">
+            <option value="">Prefer not to say</option>
+            <option value="basic">Basic</option>
+            <option value="intermediate">Intermediate</option>
+            <option value="advanced">Advanced</option>
+            <option value="native">Native Speaker</option>
+          </select>
+        </div>
+        
+        <!-- Coding Experience -->
+        <div class="demographic-field">
+          <label for="codingExperience">
+            Coding Experience
+            <span class="optional-tag">(optional)</span>
+          </label>
+          <select id="codingExperience" name="codingExperience">
+            <option value="">Prefer not to say</option>
+            <option value="none">None</option>
+            <option value="basic">Basic</option>
+            <option value="advanced">Advanced</option>
+          </select>
+        </div>
+        
+        <!-- AI Usage -->
+        <div class="demographic-field">
+          <label for="llmUsage">
+            AI Assistant Usage
+            <span class="optional-tag">(optional)</span>
+          </label>
+          <select id="llmUsage" name="llmUsage">
+            <option value="">Prefer not to say</option>
+            <option value="never">Never</option>
+            <option value="monthly">Monthly</option>
+            <option value="weekly">Weekly</option>
+            <option value="daily">Daily</option>
+          </select>
+        </div>
+        
+        <!-- Military Experience -->
+        <div class="demographic-field">
+          <label for="military">
+            Military Experience
+            <span class="optional-tag">(optional)</span>
+          </label>
+          <select id="military" name="military">
+            <option value="">Prefer not to say</option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          </select>
+        </div>
+        
+        <!-- Consent Section -->
+        <div class="consent-section">
+          <h3>Study Information & Consent</h3>
+          <div class="consent-text">
+            <p><strong>Purpose:</strong> This research explores how people with different backgrounds interact with AI assistants to improve educational AI tools.</p>
+            <p><strong>Data Use:</strong> Your demographic information will be used solely for aggregate statistical analysis. No individual data will be published. Small group sizes will be combined into broader categories to prevent identification.</p>
+            <p><strong>Storage:</strong> Data is stored securely on Google's encrypted infrastructure and will be retained for a maximum of 5 years.</p>
+            <p><strong>Voluntary:</strong> All questions are optional. You may skip this entire form or any individual question.</p>
+          </div>
+          <div class="consent-checkbox">
+            <input type="checkbox" id="consent" name="consent">
+            <label for="consent">
+              I understand and consent to the use of my anonymized data for research purposes
+            </label>
+          </div>
+        </div>
+      </form>
+      
+      <div class="modal-buttons">
+        <button type="button" class="btn-skip" onclick="skipDemographics()">
+          Skip for now
+        </button>
+        <button type="button" class="btn-continue" id="submitDemographics" onclick="submitDemographics()">
+          Continue to AI Assistant
+        </button>
+      </div>
+    </div>
+  </div>
+  
   <div class="container">
+    <!-- Theme switcher -->
+    <div class="theme-switcher">
+      <button id="theme-light" title="Light mode">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+      </button>
+      <button id="theme-system" title="System mode">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+          <line x1="8" y1="21" x2="16" y2="21"></line>
+          <line x1="12" y1="17" x2="12" y2="21"></line>
+        </svg>
+      </button>
+      <button id="theme-dark" title="Dark mode">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+      </button>
+    </div>
     <!-- No branding - experimental neutrality -->
     
     <!-- Login Screen -->
@@ -162,8 +714,8 @@
       <div class="form-group">
         <label for="nricInput">Enter last 4 characters of your NRIC:</label>
         <input type="text" id="nricInput" placeholder="e.g., 123A" maxlength="4" required 
-               style="text-transform: uppercase; font-size: 20px; text-align: center; letter-spacing: 2px;">
-        <small style="color: #666; display: block; margin-top: 5px;">Used to generate a random ID • Not stored • Not linked to your identity</small>
+               style="text-transform: uppercase; font-size: 20px; text-align: center; letter-spacing: 2px; background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color);">
+        <small style="color: var(--text-secondary); display: block; margin-top: 5px;">Used to generate a random ID • Not stored • Not linked to your identity</small>
       </div>
       
       <button id="loginBtn" class="submit-btn" style="width: 100%; margin-top: 20px;">
@@ -173,15 +725,15 @@
     
     <!-- Main Interface (hidden initially) -->
     <div id="mainInterface" style="display: none;">
-      <div style="text-align: right; margin-bottom: 20px; color: #666;">
+      <div style="text-align: right; margin-bottom: 20px; color: var(--text-secondary);">
         <span id="sessionInfo"></span>
-        <button id="logoutBtn" style="margin-left: 10px; padding: 5px 15px; background: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer;">
+        <button id="logoutBtn" style="margin-left: 10px; padding: 5px 15px; background: var(--button-danger); color: white; border: none; border-radius: 4px; cursor: pointer;">
           End Session
         </button>
       </div>
     
       <div class="editor-container">
-        <label for="prompt">Enter your prompt:</label>
+        <h2 style="margin-bottom: 15px; font-size: 18px; font-weight: 700; color: var(--text-primary);">Your Prompt</h2>
         <textarea id="prompt" placeholder="Type your prompt here..."></textarea>
       </div>
       
@@ -193,11 +745,12 @@
       <div id="message"></div>
       
       <div class="output-section">
-        <h2>AI Response</h2>
+        <h2 style="margin-bottom: 15px; font-size: 18px; font-weight: 700; color: var(--text-primary);">AI Response</h2>
         <div id="output" class="output-container">
-          <span style="color: #999;">Waiting for prompt submission...</span>
+          <span style="color: var(--text-muted); font-weight: 400;">Waiting for prompt submission...</span>
         </div>
-        <div id="metadata" class="metadata"></div>
+        <!-- Metadata div kept for spacing but hidden from users -->
+        <div id="metadata" class="metadata" style="display: none;"></div>
       </div>
     </div>
   </div>
@@ -206,14 +759,109 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/codemirror.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/markdown/markdown.min.js"></script>
   
+  <!-- Marked.js for Markdown parsing - using specific version for reliability -->
+  <script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
+  
   <script>
-    let editor;
+    let editor = null;  // Explicitly initialize as null to prevent duplicates
     let sessionData = {
       participantId: null,
-      cohortId: 'default'
+      cohortId: 'default',
+      promptCount: 0,
+      demographicsCollected: false,
+      demographicsSkipped: false
+    };
+    
+    // Configuration - easily adjustable
+    const CONFIG = {
+      PROMPTS_BEFORE_DEMOGRAPHICS: 1, // Set to 1 for testing, change to 3 for production
+      ENABLE_MARKDOWN: true
+    };
+    
+    // Clean up function to prevent duplicate editors
+    function cleanupEditor() {
+      if (editor && typeof editor.toTextArea === 'function') {
+        try {
+          editor.toTextArea();
+        } catch (e) {
+          console.error('Error cleaning up editor:', e);
+        }
+      }
+      editor = null;
+      
+      // Remove any orphaned CodeMirror instances
+      const existingEditors = document.querySelectorAll('.CodeMirror');
+      if (existingEditors.length > 1) {
+        console.warn('Found multiple CodeMirror instances, cleaning up...');
+        for (let i = 1; i < existingEditors.length; i++) {
+          existingEditors[i].remove();
+        }
+      }
+    }
+    
+    // Theme Manager
+    const ThemeManager = {
+      init() {
+        // Check for saved theme or use system preference
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme) {
+          this.setTheme(savedTheme);
+        } else {
+          this.setTheme('system');
+        }
+        
+        // Add event listeners to theme buttons
+        document.getElementById('theme-light')?.addEventListener('click', () => this.setTheme('light'));
+        document.getElementById('theme-dark')?.addEventListener('click', () => this.setTheme('dark'));
+        document.getElementById('theme-system')?.addEventListener('click', () => this.setTheme('system'));
+        
+        // Listen for system theme changes
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+          if (localStorage.getItem('theme') === 'system' || !localStorage.getItem('theme')) {
+            this.applySystemTheme();
+          }
+        });
+      },
+      
+      setTheme(theme) {
+        localStorage.setItem('theme', theme);
+        
+        // Update button states
+        document.querySelectorAll('.theme-switcher button').forEach(btn => {
+          btn.classList.remove('active');
+        });
+        document.getElementById(`theme-${theme}`)?.classList.add('active');
+        
+        // Apply theme
+        if (theme === 'system') {
+          this.applySystemTheme();
+        } else {
+          document.documentElement.setAttribute('data-theme', theme);
+          this.updateCodeMirrorTheme(theme === 'dark');
+        }
+      },
+      
+      applySystemTheme() {
+        const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        this.updateCodeMirrorTheme(isDark);
+      },
+      
+      updateCodeMirrorTheme(isDark) {
+        // Update CodeMirror theme if it exists
+        if (window.editor && window.editor.setOption) {
+          window.editor.setOption('theme', isDark ? 'monokai' : 'default');
+        }
+      }
     };
     
     window.addEventListener('load', () => {
+      // Initialize theme manager
+      ThemeManager.init();
+      
+      // Clean up any existing editor instances
+      cleanupEditor();
+      
       // Initialize login handlers
       setupLogin();
       
@@ -259,6 +907,17 @@
     function handleLoginSuccess(result) {
       sessionData.participantId = result.hash;
       
+      // Check if demographics were already collected
+      const demographicsCollected = localStorage.getItem('demographicsCollected_' + sessionData.participantId);
+      const demographicsSkipped = localStorage.getItem('demographicsSkipped_' + sessionData.participantId);
+      
+      if (demographicsCollected === 'true') {
+        sessionData.demographicsCollected = true;
+      }
+      if (demographicsSkipped === 'true') {
+        sessionData.demographicsSkipped = true;
+      }
+      
       // Hide login screen
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('mainInterface').style.display = 'block';
@@ -275,13 +934,20 @@
     }
     
     function initializeMainInterface() {
-      // Initialize CodeMirror
+      // Initialize CodeMirror with better defaults
+      // Get current theme for CodeMirror
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      
       editor = CodeMirror.fromTextArea(document.getElementById('prompt'), {
         lineNumbers: true,
         mode: 'markdown',
-        theme: 'monokai',
+        theme: isDark ? 'monokai' : 'default',
         lineWrapping: true,
-        autofocus: true
+        autofocus: true,
+        styleActiveLine: true,
+        matchBrackets: true,
+        autoCloseBrackets: true,
+        tabSize: 2
       });
       
       // Submit button handler
@@ -290,7 +956,7 @@
       // Clear button handler
       document.getElementById('clear').addEventListener('click', () => {
         editor.setValue('');
-        document.getElementById('output').innerHTML = '<span style="color: #999;">Waiting for prompt submission...</span>';
+        document.getElementById('output').innerHTML = '<span style="color: var(--text-muted); font-weight: 400;">Waiting for prompt submission...</span>';
         document.getElementById('metadata').innerHTML = '';
         clearMessage();
       });
@@ -323,6 +989,7 @@
       const submitBtn = document.getElementById('submit');
       submitBtn.disabled = true;
       document.getElementById('output').innerHTML = '<div class="loading">Processing your prompt...</div>';
+      // Clear metadata area (keeping for spacing but no content)
       document.getElementById('metadata').innerHTML = '';
       clearMessage();
       
@@ -341,11 +1008,54 @@
       document.getElementById('submit').disabled = false;
       
       if (response.success) {
-        document.getElementById('output').textContent = response.output;
-        document.getElementById('metadata').innerHTML = `
-          <strong>Response time:</strong> ${new Date(response.timestamp).toLocaleString()}
-        `;
+        // Parse markdown if enabled
+        const outputElement = document.getElementById('output');
+        if (CONFIG.ENABLE_MARKDOWN && typeof marked !== 'undefined') {
+          // Configure marked options
+          marked.setOptions({
+            breaks: true,
+            gfm: true,
+            headerIds: false,
+            mangle: false
+          });
+          
+          // Parse and display markdown
+          try {
+            outputElement.innerHTML = marked.parse(response.output);
+          } catch (e) {
+            console.error('Markdown parsing error:', e);
+            outputElement.textContent = response.output;
+          }
+        } else {
+          outputElement.textContent = response.output;
+        }
+        
+        // Removed metadata display
+        document.getElementById('metadata').innerHTML = '';
         showMessage('Prompt processed successfully!', 'success');
+        
+        // Increment prompt count
+        sessionData.promptCount++;
+        console.log('Prompt count:', sessionData.promptCount);
+        
+        // Check if we should show demographics
+        console.log('Checking demographics trigger...');
+        console.log('- Prompt count:', sessionData.promptCount);
+        console.log('- Target:', CONFIG.PROMPTS_BEFORE_DEMOGRAPHICS);
+        console.log('- Collected?', sessionData.demographicsCollected);
+        console.log('- Skipped?', sessionData.demographicsSkipped);
+        
+        if (sessionData.promptCount === CONFIG.PROMPTS_BEFORE_DEMOGRAPHICS && 
+            !sessionData.demographicsCollected && 
+            !sessionData.demographicsSkipped) {
+          console.log('✅ All conditions met - showing modal in 1.5 seconds');
+          setTimeout(() => {
+            console.log('Timer fired, calling showDemographicsModal...');
+            showDemographicsModal();
+          }, 1500);
+        } else {
+          console.log('❌ Not showing modal');
+        }
         
         // Clear the editor for next prompt
         setTimeout(() => {
@@ -359,7 +1069,7 @@
     
     function handleError(error) {
       document.getElementById('submit').disabled = false;
-      document.getElementById('output').innerHTML = '<span style="color: #f44336;">Error processing prompt. Please try again.</span>';
+      document.getElementById('output').innerHTML = '<span style="color: var(--button-danger);">Error processing prompt. Please try again.</span>';
       showMessage('Error: ' + error, 'error');
       console.error('Full error:', error);
       
@@ -378,6 +1088,98 @@
     function clearMessage() {
       document.getElementById('message').className = '';
       document.getElementById('message').textContent = '';
+    }
+    
+    // Demographics Modal Functions
+    function showDemographicsModal() {
+      console.log('=== SHOWING DEMOGRAPHICS MODAL ===');
+      const modal = document.getElementById('demographicsModal');
+      if (!modal) {
+        console.error('❌ Demographics modal element not found!');
+        // Check what elements exist
+        console.log('Body children:', document.body.children.length);
+        console.log('First few body elements:', Array.from(document.body.children).slice(0, 3).map(el => el.tagName));
+        return;
+      }
+      
+      console.log('Demographics screen found, making visible...');
+      modal.classList.add('active');
+      
+      // Verify visibility
+      const computed = window.getComputedStyle(modal);
+      console.log('Modal display:', computed.display);
+      console.log('Modal visibility:', computed.visibility);
+      
+      // Setup consent checkbox
+      const consentCheckbox = document.getElementById('consent');
+      const continueBtn = document.getElementById('submitDemographics');
+      
+      if (consentCheckbox && continueBtn) {
+        console.log('Setting up consent checkbox...');
+        consentCheckbox.addEventListener('change', (e) => {
+          continueBtn.disabled = !e.target.checked;
+        });
+        continueBtn.disabled = true;
+      } else {
+        console.error('Missing form elements');
+      }
+    }
+    
+    function skipDemographics() {
+      console.log('skipDemographics called');
+      sessionData.demographicsSkipped = true;
+      localStorage.setItem('demographicsSkipped_' + sessionData.participantId, 'true');
+      
+      const modal = document.getElementById('demographicsModal');
+      if (modal) {
+        modal.classList.remove('active');
+      }
+      
+      showMessage('You can provide this information later if you wish.', 'success');
+    }
+    
+    // Make functions globally accessible for onclick handlers
+    window.skipDemographics = skipDemographics;
+    window.submitDemographics = submitDemographics;
+    
+    function submitDemographics() {
+      const form = document.getElementById('demographicsForm');
+      const formData = new FormData(form);
+      
+      const demographics = {
+        participantId: sessionData.participantId,
+        timestamp: new Date().toISOString(),
+        ageBand: formData.get('ageBand') || '',
+        gender: formData.get('gender') || '',
+        qualification: formData.get('qualification') || '',
+        discipline: formData.get('discipline') || '',
+        englishProficiency: formData.get('englishProficiency') || '',
+        codingExperience: formData.get('codingExperience') || '',
+        llmUsage: formData.get('llmUsage') || '',
+        military: formData.get('military') || '',
+        consentGiven: formData.get('consent') ? true : false
+      };
+      
+      // Save to server
+      google.script.run
+        .withSuccessHandler(() => {
+          sessionData.demographicsCollected = true;
+          localStorage.setItem('demographicsCollected_' + sessionData.participantId, 'true');
+          
+          const modal = document.getElementById('demographicsModal');
+          modal.classList.remove('active');
+          
+          showMessage('Thank you! Your information has been saved.', 'success');
+        })
+        .withFailureHandler((error) => {
+          console.error('Failed to save demographics:', error);
+          showMessage('Failed to save information. You can continue without it.', 'error');
+          
+          setTimeout(() => {
+            skipDemographics();
+          }, 2000);
+        })
+        .saveDemographics(demographics);
     }
   </script>
 </body>

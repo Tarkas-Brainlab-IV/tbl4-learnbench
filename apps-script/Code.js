@@ -59,7 +59,17 @@ function getConfig() {
     geminiApiKey: props.getProperty('GEMINI_API_KEY'),
     classSchedule: JSON.parse(props.getProperty('CLASS_SCHEDULE') || '[]'), // Array of class times
     timezone: props.getProperty('TIMEZONE') || 'Asia/Singapore',
-    allowOutOfClass: props.getProperty('ALLOW_OUT_OF_CLASS') === 'true' || false
+    allowOutOfClass: props.getProperty('ALLOW_OUT_OF_CLASS') === 'true' || false,
+    promptsBeforeDemographics: parseInt(props.getProperty('PROMPTS_BEFORE_DEMOGRAPHICS') || '1') // Configurable
+  };
+}
+
+// Get demographics configuration
+function getDemographicsConfig() {
+  const props = PropertiesService.getScriptProperties();
+  return {
+    promptsBeforeDemographics: parseInt(props.getProperty('PROMPTS_BEFORE_DEMOGRAPHICS') || '1'),
+    enableDemographics: props.getProperty('ENABLE_DEMOGRAPHICS') !== 'false' // Default true
   };
 }
 
@@ -427,24 +437,44 @@ function processPrompt(data) {
 
 // Get or create the logging spreadsheet
 function getOrCreateSheet() {
-  const SPREADSHEET_NAME = 'PromptLab - Prompt Data';
   const SHEET_NAME = 'Prompts';
+  
+  // Get SPREADSHEET_ID from script properties
+  const SPREADSHEET_ID = PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID');
+  
+  if (!SPREADSHEET_ID) {
+    throw new Error('SPREADSHEET_ID not found in script properties. Please run quickSetup() or add it in Project Settings → Script Properties');
+  }
   
   let spreadsheet;
   
-  // Try to find existing spreadsheet
-  const files = DriveApp.getFilesByName(SPREADSHEET_NAME);
-  if (files.hasNext()) {
-    spreadsheet = SpreadsheetApp.open(files.next());
-  } else {
-    // Create new spreadsheet
-    spreadsheet = SpreadsheetApp.create(SPREADSHEET_NAME);
+  try {
+    // Open the spreadsheet by ID (fixed: was using SpreadsheetApp.open which caused errors)
+    spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+  } catch (error) {
+    console.error('Error opening spreadsheet:', error);
+    throw new Error('Failed to open spreadsheet. Please check the SPREADSHEET_ID in script properties.');
   }
   
   // Get or create sheet
   let sheet = spreadsheet.getSheetByName(SHEET_NAME);
   if (!sheet) {
     sheet = spreadsheet.insertSheet(SHEET_NAME);
+  }
+  
+  // ALWAYS check if headers exist (in case of existing sheet without headers)
+  const firstRow = sheet.getRange(1, 1, 1, 10).getValues()[0];
+  const hasHeaders = firstRow[0] === 'Timestamp' || firstRow[0] === 'timestamp';
+  
+  if (!hasHeaders) {
+    console.log('Headers missing - adding them now...');
+    
+    // Check if there's existing data that needs to be moved down
+    const lastRow = sheet.getLastRow();
+    if (lastRow > 0) {
+      // There's existing data - insert a row at the top
+      sheet.insertRowBefore(1);
+    }
     
     // Add headers
     sheet.getRange(1, 1, 1, 10).setValues([[
@@ -468,6 +498,8 @@ function getOrCreateSheet() {
     
     // Auto-resize columns
     sheet.autoResizeColumns(1, 10);
+    
+    console.log('Headers added successfully');
   }
   
   return sheet;
@@ -775,9 +807,165 @@ function setupScriptProperties() {
   
   // Set these properties in the Apps Script editor:
   // File > Project Properties > Script Properties
+  scriptProperties.setProperty('SPREADSHEET_ID', '1152xJb3pqhug19ExNKCdAFy1sSvMa2GyJIVoEkLd29o');
   scriptProperties.setProperty('GEMINI_API_KEY', 'YOUR_API_KEY_HERE');
   scriptProperties.setProperty('ENABLE_CONTEXT', 'false'); // Set to 'true' to enable conversation memory
   scriptProperties.setProperty('CONTEXT_WINDOW', '5'); // Number of previous exchanges to remember
+  scriptProperties.setProperty('ALLOW_OUT_OF_CLASS', 'true'); // Allow submissions outside class hours
+}
+
+// Sanity check function to verify SpreadsheetApp is not shadowed
+function sanityCheck() {
+  console.log('SpreadsheetApp type:', typeof SpreadsheetApp);
+  console.log('SpreadsheetApp has openById:', typeof SpreadsheetApp.openById === 'function');
+  console.log('Available methods (first 10):', Object.keys(SpreadsheetApp).slice(0, 10).join(', '));
+  
+  try {
+    const ss = SpreadsheetApp.openById('1152xJb3pqhug19ExNKCdAFy1sSvMa2GyJIVoEkLd29o');
+    console.log('✅ Successfully opened spreadsheet:', ss.getName());
+    return true;
+  } catch (error) {
+    console.error('❌ Failed to open spreadsheet:', error.toString());
+    return false;
+  }
+}
+
+// Function to add headers to existing sheet - RUN THIS IF HEADERS ARE MISSING
+function addHeadersToSheet() {
+  try {
+    const SPREADSHEET_ID = PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID');
+    if (!SPREADSHEET_ID) {
+      console.error('No SPREADSHEET_ID found. Run quickSetup() first.');
+      return false;
+    }
+    
+    const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const sheet = spreadsheet.getSheetByName('Prompts');
+    
+    if (!sheet) {
+      console.error('Prompts sheet not found');
+      return false;
+    }
+    
+    // Check current first row
+    const firstRow = sheet.getRange(1, 1, 1, 10).getValues()[0];
+    const hasHeaders = firstRow[0] === 'Timestamp' || firstRow[0] === 'timestamp';
+    
+    if (hasHeaders) {
+      console.log('Headers already exist!');
+      return true;
+    }
+    
+    // Insert row at top for headers
+    const lastRow = sheet.getLastRow();
+    if (lastRow > 0) {
+      sheet.insertRowBefore(1);
+      console.log('Moved existing data down one row');
+    }
+    
+    // Add headers
+    sheet.getRange(1, 1, 1, 10).setValues([[
+      'Timestamp',
+      'Participant ID',
+      'Cohort ID',
+      'Prompt',
+      'AI Response',
+      'Model',
+      'Token Count',
+      'Processing Time (ms)',
+      'Status',
+      'Notes'
+    ]]);
+    
+    // Format headers
+    sheet.getRange(1, 1, 1, 10)
+      .setFontWeight('bold')
+      .setBackground('#4CAF50')
+      .setFontColor('#FFFFFF');
+    
+    // Set column widths for better readability
+    sheet.setColumnWidth(1, 180); // Timestamp
+    sheet.setColumnWidth(2, 120); // Participant ID
+    sheet.setColumnWidth(3, 120); // Cohort ID
+    sheet.setColumnWidth(4, 300); // Prompt
+    sheet.setColumnWidth(5, 400); // AI Response
+    sheet.setColumnWidth(6, 100); // Model
+    sheet.setColumnWidth(7, 100); // Token Count
+    sheet.setColumnWidth(8, 140); // Processing Time
+    sheet.setColumnWidth(9, 100); // Status
+    sheet.setColumnWidth(10, 200); // Notes
+    
+    // Freeze the header row
+    sheet.setFrozenRows(1);
+    
+    console.log('✅ Headers added successfully!');
+    console.log('✅ Column widths set');
+    console.log('✅ Header row frozen');
+    
+    return true;
+    
+  } catch (error) {
+    console.error('Error adding headers:', error);
+    return false;
+  }
+}
+
+// Quick setup function - RUN THIS FIRST!
+function quickSetup() {
+  // First verify SpreadsheetApp is working
+  console.log('=== PromptLab Quick Setup ===');
+  console.log('Checking SpreadsheetApp availability...');
+  console.log('SpreadsheetApp type:', typeof SpreadsheetApp);
+  console.log('Has openById method:', typeof SpreadsheetApp.openById === 'function');
+  
+  const scriptProperties = PropertiesService.getScriptProperties();
+  
+  // Set the spreadsheet ID
+  scriptProperties.setProperty('SPREADSHEET_ID', '1152xJb3pqhug19ExNKCdAFy1sSvMa2GyJIVoEkLd29o');
+  scriptProperties.setProperty('ALLOW_OUT_OF_CLASS', 'true');
+  scriptProperties.setProperty('PROMPTS_BEFORE_DEMOGRAPHICS', '1'); // Set to 1 for testing, 3 for production
+  scriptProperties.setProperty('ENABLE_DEMOGRAPHICS', 'true');
+  
+  // Check if we can access the spreadsheet
+  try {
+    const spreadsheet = SpreadsheetApp.openById('1152xJb3pqhug19ExNKCdAFy1sSvMa2GyJIVoEkLd29o');
+    console.log('✅ Successfully connected to spreadsheet:', spreadsheet.getName());
+    
+    // Check for the Prompts sheet
+    const sheet = spreadsheet.getSheetByName('Prompts');
+    if (sheet) {
+      console.log('✅ Found "Prompts" sheet with', sheet.getLastRow(), 'rows');
+    } else {
+      console.log('⚠️ "Prompts" sheet not found - will be created on first use');
+    }
+    
+    // Check for Gemini API key
+    const apiKey = scriptProperties.getProperty('GEMINI_API_KEY');
+    if (apiKey && apiKey !== 'YOUR_API_KEY_HERE' && apiKey.length > 10) {
+      console.log('✅ Gemini API key is set');
+    } else {
+      console.log('❌ Please set GEMINI_API_KEY in Script Properties');
+      console.log('   Get your key from: https://aistudio.google.com/app/apikey');
+    }
+    
+    console.log('\n=== Setup Summary ===');
+    console.log('Spreadsheet ID:', scriptProperties.getProperty('SPREADSHEET_ID'));
+    console.log('Allow out-of-class:', scriptProperties.getProperty('ALLOW_OUT_OF_CLASS'));
+    console.log('Context enabled:', scriptProperties.getProperty('ENABLE_CONTEXT') || 'false');
+    
+    return {
+      success: true,
+      spreadsheetConnected: true,
+      message: 'Setup complete! Remember to set GEMINI_API_KEY if not already done.'
+    };
+    
+  } catch (error) {
+    console.error('❌ Error during setup:', error);
+    return {
+      success: false,
+      error: error.toString()
+    };
+  }
 }
 
 // Admin function to toggle context feature
@@ -802,6 +990,151 @@ function setClassSchedule(schedule) {
 function setAllowOutOfClass(allowed) {
   PropertiesService.getScriptProperties().setProperty('ALLOW_OUT_OF_CLASS', allowed ? 'true' : 'false');
   console.log('Out-of-class submissions:', allowed ? 'ALLOWED' : 'BLOCKED');
+}
+
+// Save demographics data to a separate, protected sheet
+function saveDemographics(demographics) {
+  try {
+    const SPREADSHEET_ID = PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID');
+    if (!SPREADSHEET_ID) {
+      throw new Error('SPREADSHEET_ID not configured');
+    }
+    
+    const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+    
+    // Get or create Demographics sheet
+    let demographicsSheet = spreadsheet.getSheetByName('Demographics');
+    if (!demographicsSheet) {
+      demographicsSheet = spreadsheet.insertSheet('Demographics');
+      
+      // Add headers if new sheet
+      const headers = [
+        'Timestamp',
+        'Participant ID',
+        'Age Band',
+        'Gender', 
+        'Qualification',
+        'Discipline',
+        'English Proficiency',
+        'Coding Experience',
+        'LLM Usage',
+        'Occupation',
+        'Consent Given',
+        'Collection Method'
+      ];
+      
+      demographicsSheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+      
+      // Format headers
+      demographicsSheet.getRange(1, 1, 1, headers.length)
+        .setFontWeight('bold')
+        .setBackground('#2196F3')
+        .setFontColor('#FFFFFF');
+      
+      // Set column widths
+      demographicsSheet.setColumnWidth(1, 180); // Timestamp
+      demographicsSheet.setColumnWidth(2, 120); // Participant ID
+      demographicsSheet.setColumnWidth(3, 100); // Age Band
+      demographicsSheet.setColumnWidth(4, 100); // Gender
+      demographicsSheet.setColumnWidth(5, 150); // Qualification
+      demographicsSheet.setColumnWidth(6, 150); // Discipline
+      demographicsSheet.setColumnWidth(7, 150); // English Proficiency
+      demographicsSheet.setColumnWidth(8, 150); // Coding Experience
+      demographicsSheet.setColumnWidth(9, 120); // LLM Usage
+      demographicsSheet.setColumnWidth(10, 150); // Occupation
+      demographicsSheet.setColumnWidth(11, 120); // Consent
+      demographicsSheet.setColumnWidth(12, 150); // Collection Method
+      
+      // Freeze header row
+      demographicsSheet.setFrozenRows(1);
+      
+      // IMPORTANT: Protect the sheet - only script owner can edit
+      const protection = demographicsSheet.protect();
+      protection.setDescription('Demographics data - Protected');
+      protection.setWarningOnly(false);
+      // Remove all editors except the owner
+      protection.removeEditors(protection.getEditors());
+      if (protection.canDomainEdit()) {
+        protection.setDomainEdit(false);
+      }
+      
+      console.log('Created and protected Demographics sheet');
+    }
+    
+    // Check if participant already submitted demographics
+    const existingData = demographicsSheet.getDataRange().getValues();
+    const participantCol = 1; // Participant ID column (0-indexed)
+    
+    for (let i = 1; i < existingData.length; i++) {
+      if (existingData[i][participantCol] === demographics.participantId) {
+        console.log('Demographics already recorded for participant:', demographics.participantId);
+        return {
+          success: true,
+          message: 'Demographics already on file',
+          updated: false
+        };
+      }
+    }
+    
+    // Add new demographics row
+    const row = [
+      new Date(), // Timestamp
+      demographics.participantId,
+      demographics.ageBand || '',
+      demographics.gender || '',
+      demographics.qualification || '',
+      demographics.discipline || '',
+      demographics.englishProficiency || '',
+      demographics.codingExperience || '',
+      demographics.llmUsage || '',
+      demographics.occupation || '',
+      demographics.consentGiven ? 'Yes' : 'No',
+      'After 3 prompts' // Collection method
+    ];
+    
+    demographicsSheet.appendRow(row);
+    
+    console.log('Demographics saved for participant:', demographics.participantId);
+    
+    return {
+      success: true,
+      message: 'Demographics saved successfully',
+      updated: true
+    };
+    
+  } catch (error) {
+    console.error('Error saving demographics:', error);
+    throw error;
+  }
+}
+
+// Function to check if demographics exist for a participant
+function checkDemographicsStatus(participantId) {
+  try {
+    const SPREADSHEET_ID = PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID');
+    if (!SPREADSHEET_ID) return { hasDemographics: false };
+    
+    const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const demographicsSheet = spreadsheet.getSheetByName('Demographics');
+    
+    if (!demographicsSheet) return { hasDemographics: false };
+    
+    const data = demographicsSheet.getDataRange().getValues();
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][1] === participantId) {
+        return { 
+          hasDemographics: true,
+          collectedAt: data[i][0]
+        };
+      }
+    }
+    
+    return { hasDemographics: false };
+    
+  } catch (error) {
+    console.error('Error checking demographics status:', error);
+    return { hasDemographics: false };
+  }
 }
 
 // Helper to set up default Singapore class schedule
@@ -1042,4 +1375,5 @@ function doGetTest() {
   } catch (error) {
     return HtmlService.createHtmlOutput('Error: ' + error.toString());
   }
-}
+}// Force update Wed  6 Aug 2025 15:58:51 +07
+// Force update Wed  6 Aug 2025 16:02:05 +07

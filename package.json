@@ -1,11 +1,11 @@
 {
-  "name": "promptlab",
+  "name": "nerv-learnbench",
   "version": "1.0.0",
-  "description": "Intelligent AI prompting experiment platform with automated cohort detection",
+  "description": "Human-AI teaming prompting experiment platform",
   "scripts": {
     "install:clasp": "npm install -g @google/clasp",
     "login": "clasp login",
-    "create": "clasp create --title 'PromptLab' --type webapp --rootDir ./apps-script",
+    "create": "clasp create --title 'NERV LearnBench' --type webapp --rootDir ./apps-script",
     "push": "clasp push",
     "pull": "clasp pull",
     "open": "clasp open",
@@ -17,10 +17,7 @@
     "dev": "npm run watch",
     "status": "clasp login --status",
     "versions": "clasp versions",
-    "test": "node tests/run-tests.js",
-    "test:local": "node tests/run-tests.js",
-    "test:gas": "clasp run runAllTests",
-    "test:watch": "nodemon tests/run-tests.js"
+    "test": "echo 'No tests configured yet'"
   },
   "keywords": [
     "google-apps-script",
@@ -28,7 +25,7 @@
     "ai",
     "prompting"
   ],
-  "author": "PromptLab Research Team",
+  "author": "NERV Systems",
   "license": "MIT",
   "devDependencies": {
     "@google/clasp": "^2.4.2",

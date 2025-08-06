@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git checkout:*)",
+      "Bash(clasp push:*)",
+      "Bash(clasp open)",
+      "Bash(clasp status:*)",
+      "Bash(clasp open:*)",
+      "Bash(clasp:*)",
+      "Bash(touch:*)",
+      "Bash(grep:*)",
+      "Bash(cat:*)",
+      "Bash(diff:*)",
+      "Bash(cp:*)",
+      "Bash(find:*)",
+      "Bash(ls:*)",
+      "Bash(tree:*)",
+      "Bash(git add:*)"
+    ],
+    "deny": []
+  }
+}

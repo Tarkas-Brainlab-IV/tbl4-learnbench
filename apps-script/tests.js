@@ -5,12 +5,16 @@
 let mockSheet, mockProperties, mockUtilities;
 
 // In Google Apps Script environment, create mocks
-if (typeof Mock !== 'undefined') {
+// CRITICAL: Mocking disabled to prevent SpreadsheetApp shadowing in production
+// This was causing "SpreadsheetApp.open is not a function" errors
+if (typeof Mock !== 'undefined' && typeof TEST_MODE !== 'undefined' && TEST_MODE === true) {
   mockSheet = Mock.createMockSheet();
   mockProperties = Mock.createMockProperties();
   mockUtilities = Mock.createMockUtilities();
   
-  // Override globals for testing
+  // Override globals for testing - ONLY when TEST_MODE is explicitly true
+  // WARNING: These assignments will break production code
+  /*
   SpreadsheetApp = {
     getActiveSpreadsheet() {
       return {
@@ -25,6 +29,7 @@ if (typeof Mock !== 'undefined') {
   };
 
   Utilities = mockUtilities;
+  */
 }
 
 // Test Suite
