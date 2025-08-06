@@ -1,12 +1,21 @@
 // Main entry point for the web app
-function doGet() {
+function doGet(e) {
   try {
+    // Check if this is demographics page request
+    if (e.parameter.page === 'demographics') {
+      return HtmlService.createHtmlOutputFromFile('demographics-form')
+        .setTitle('Study Information')
+        .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
+        .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+    }
+    
+    // Default to main interface
     return HtmlService.createHtmlOutputFromFile('index')
       .setTitle('Session')
       .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
       .addMetaTag('viewport', 'width=device-width, initial-scale=1');
   } catch (error) {
-    // Return error page if index.html is not found
+    // Return error page if files are not found
     return HtmlService.createHtmlOutput(`
       <h1>Error Loading Application</h1>
       <p>Error: ${error.toString()}</p>
@@ -400,20 +409,42 @@ function processPrompt(data) {
     }
     
     // Log to spreadsheet with smart cohort and status
-    sheet.appendRow([
+    const rowData = [
       timestamp,
       data.participantId,
       cohortInfo.cohort, // Smart cohort detection
       data.prompt,
       geminiResponse.output,
-      geminiResponse.model,
-      geminiResponse.tokens,
       geminiResponse.processingTime,
       cohortInfo.inClass ? 'IN-CLASS' : 'OUT-OF-CLASS', // Status
       cohortInfo.note || '' // Additional notes
-    ]);
+    ];
+    
+    // Use safe append to handle large content
+    safeAppendRow(sheet, rowData);
     
     console.log('Successfully logged to sheet with cohort:', cohortInfo.cohort);
+    
+    // Check if demographics needed (simplified for now)
+    let needsDemographics = false;
+    try {
+      // Count submissions by this participant in current data
+      const currentData = sheet.getDataRange().getValues();
+      let submissionCount = 0;
+      for (let i = 1; i < currentData.length; i++) {
+        if (currentData[i][1] === data.participantId) {
+          submissionCount++;
+        }
+      }
+      
+      // Only show demographics after first submission
+      // For now, we'll just track it client-side with sessionStorage
+      needsDemographics = (submissionCount === 1);
+      
+    } catch (e) {
+      console.log('Demographics check error:', e);
+      needsDemographics = false;
+    }
     
     // Return response to client
     return {
@@ -421,7 +452,8 @@ function processPrompt(data) {
       output: geminiResponse.output,
       model: geminiResponse.model,
       tokens: geminiResponse.tokens,
-      timestamp: timestamp.toISOString()
+      timestamp: timestamp.toISOString(),
+      needsDemographics: needsDemographics
     };
     
   } catch (error) {
@@ -437,6 +469,12 @@ function processPrompt(data) {
 
 // Get or create the logging spreadsheet
 function getOrCreateSheet() {
+  // Delegate to the robust sheet manager if it exists
+  if (typeof getLogSheet !== 'undefined') {
+    return getLogSheet();
+  }
+  
+  // Fallback to direct implementation
   const SHEET_NAME = 'Prompts';
   
   // Get SPREADSHEET_ID from script properties

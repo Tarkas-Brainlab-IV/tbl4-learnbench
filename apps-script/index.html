@@ -918,6 +918,9 @@
         sessionData.demographicsSkipped = true;
       }
       
+      // Store in session storage for demographics page
+      sessionStorage.setItem('participantId', result.hash);
+      
       // Hide login screen
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('mainInterface').style.display = 'block';
@@ -934,11 +937,23 @@
     }
     
     function initializeMainInterface() {
+      // Guard against double initialization
+      if (editor) {
+        console.log('Editor already initialized');
+        return;
+      }
+      
       // Initialize CodeMirror with better defaults
       // Get current theme for CodeMirror
       const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
       
-      editor = CodeMirror.fromTextArea(document.getElementById('prompt'), {
+      const textarea = document.getElementById('prompt');
+      if (!textarea) {
+        console.error('Prompt textarea not found');
+        return;
+      }
+      
+      editor = CodeMirror.fromTextArea(textarea, {
         lineNumbers: true,
         mode: 'markdown',
         theme: isDark ? 'monokai' : 'default',
@@ -950,23 +965,31 @@
         tabSize: 2
       });
       
-      // Submit button handler
-      document.getElementById('submit').addEventListener('click', submitPrompt);
+      // Submit button handler (remove old listener first)
+      const submitBtn = document.getElementById('submit');
+      submitBtn.removeEventListener('click', submitPrompt);
+      submitBtn.addEventListener('click', submitPrompt);
       
       // Clear button handler
-      document.getElementById('clear').addEventListener('click', () => {
+      const clearBtn = document.getElementById('clear');
+      const clearHandler = () => {
         editor.setValue('');
         document.getElementById('output').innerHTML = '<span style="color: var(--text-muted); font-weight: 400;">Waiting for prompt submission...</span>';
         document.getElementById('metadata').innerHTML = '';
         clearMessage();
-      });
+      };
+      clearBtn.removeEventListener('click', clearHandler);
+      clearBtn.addEventListener('click', clearHandler);
       
       // Logout button
-      document.getElementById('logoutBtn').addEventListener('click', () => {
+      const logoutBtn = document.getElementById('logoutBtn');
+      const logoutHandler = () => {
         if (confirm('End your session?')) {
           location.reload();
         }
-      });
+      };
+      logoutBtn.removeEventListener('click', logoutHandler);
+      logoutBtn.addEventListener('click', logoutHandler);
       
       // Enable Enter key to submit when not in editor
       document.addEventListener('keydown', (e) => {

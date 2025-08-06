@@ -24,6 +24,8 @@ function loadTestFiles() {
   const testFiles = [
     '../apps-script/Code.js',
     '../apps-script/clustering-analysis.js',
+    '../apps-script/demographics-storage.js',
+    '../apps-script/demographics-check.js',
     '../apps-script/tests.js'
   ];
   

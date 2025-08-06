@@ -1,0 +1,27 @@
+{
+  "timestamp": "2025-08-05T18:36:01.065Z",
+  "summary": {
+    "total": 4,
+    "passed": 4,
+    "failed": 0,
+    "duration": 100
+  },
+  "details": [
+    {
+      "name": "Syntax check: Code.js",
+      "passed": true
+    },
+    {
+      "name": "Syntax check: clustering-analysis.js",
+      "passed": true
+    },
+    {
+      "name": "Syntax check: demographics-storage.js",
+      "passed": true
+    },
+    {
+      "name": "Syntax check: demographics-check.js",
+      "passed": true
+    }
+  ]
+}
