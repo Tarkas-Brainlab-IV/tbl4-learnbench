@@ -68,7 +68,7 @@
       font-size: 16px;
       max-width: 1200px;
       margin: 0 auto;
-      padding: 20px;
+      padding: 80px 20px 20px 20px;  /* Top padding for header bar */
       background-color: var(--bg-primary);
       color: var(--text-primary);
     }
@@ -81,19 +81,55 @@
       position: relative;
     }
     
+    /* Header bar */
+    .header-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 30px;
+      z-index: 1000;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .header-bar .session-info {
+      font-size: 14px;
+      color: var(--text-secondary);
+      font-weight: 500;
+      letter-spacing: 0.5px;
+    }
+    
     /* Theme switcher */
     .theme-switcher {
-      position: absolute;
-      top: 20px;
-      left: 20px;  /* Changed from right to left to avoid overlap */
       display: flex;
       gap: 8px;
       align-items: center;
       background: var(--bg-primary);
-      padding: 8px 12px;
+      padding: 6px 10px;
       border-radius: 20px;
       border: 1px solid var(--border-color);
-      z-index: 100;
+    }
+    
+    .header-bar .end-session-btn {
+      padding: 8px 20px;
+      background: var(--button-danger);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+    
+    .header-bar .end-session-btn:hover {
+      background: #c0392b;
     }
     
     .theme-switcher button {
@@ -190,6 +226,34 @@
       background: var(--code-bg);
     }
     
+    /* Light theme CodeMirror adjustments */
+    [data-theme="light"] .CodeMirror {
+      background: #ffffff;
+      color: #2c3e50;
+    }
+    
+    [data-theme="light"] .CodeMirror-gutters {
+      background: #f8f9fa;
+      border-right-color: #dee2e6;
+    }
+    
+    [data-theme="light"] .CodeMirror-linenumber {
+      color: #6c757d;
+    }
+    
+    [data-theme="light"] .CodeMirror-cursor {
+      border-left-color: #2c3e50;
+    }
+    
+    [data-theme="light"] .CodeMirror-selected {
+      background: #d1ecf1;
+    }
+    
+    [data-theme="light"] .CodeMirror pre.CodeMirror-line,
+    [data-theme="light"] .CodeMirror pre.CodeMirror-line-like {
+      color: #2c3e50;
+    }
+    
     /* Dark theme CodeMirror adjustments */
     [data-theme="dark"] .CodeMirror {
       background: var(--bg-secondary);
@@ -209,12 +273,17 @@
       border-left-color: var(--text-primary);
     }
     
-    .CodeMirror-lines {
-      padding: 8px 0;
+    [data-theme="dark"] .CodeMirror-selected {
+      background: #3a3a3a;
     }
     
-    .CodeMirror pre.CodeMirror-line {
+    [data-theme="dark"] .CodeMirror pre.CodeMirror-line,
+    [data-theme="dark"] .CodeMirror pre.CodeMirror-line-like {
       color: var(--text-primary);
+    }
+    
+    .CodeMirror-lines {
+      padding: 8px 0;
     }
     
     .button-group {
@@ -346,71 +415,74 @@
     }
     
     .demographic-field {
-      margin-bottom: 20px;
+      margin-bottom: 40px;
+      padding: 25px;
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
     }
     
-    .demographic-field label {
+    .demographic-field > label:first-child {
       display: block;
-      margin-bottom: 6px;
+      margin-bottom: 16px;
       font-weight: 600;
-      font-size: 14px;
+      font-size: 16px;
       color: var(--text-primary);
+      letter-spacing: 0.3px;
     }
     
     .demographic-field .optional-tag {
       color: var(--text-muted);
       font-weight: 400;
-      font-size: 12px;
-      margin-left: 6px;
+      font-size: 13px;
+      margin-left: 8px;
       font-style: italic;
+      opacity: 0.7;
     }
     
-    .demographic-field select {
-      width: 100%;
-      padding: 10px 12px;
-      border: 1px solid var(--border-color);
-      border-radius: 6px;
-      background: var(--bg-primary);
-      color: var(--text-primary);
-      font-size: 14px;
-      cursor: pointer;
-      transition: border-color 0.2s;
+    
+    .button-group {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      margin-top: 0;
     }
     
-    .demographic-field select:hover {
-      border-color: var(--border-dark);
-    }
-    
-    .demographic-field select:focus {
-      outline: none;
-      border-color: var(--button-success);
-    }
-    
-    .radio-group {
-      display: flex;
-      gap: 20px;
-      flex-wrap: wrap;
-      margin-top: 8px;
-    }
-    
-    .radio-option {
+    .button-option {
       display: flex;
       align-items: center;
-      gap: 6px;
+      justify-content: center;
+      padding: 14px 20px;
+      background: var(--bg-primary);
+      border: 2px solid var(--border-color);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      min-height: 52px;
+      font-size: 15px;
+      font-weight: 450;
+      color: var(--text-primary);
+      user-select: none;
+      text-align: center;
     }
     
-    .radio-option input[type="radio"] {
-      width: 16px;
-      height: 16px;
-      margin: 0;
-      cursor: pointer;
+    .button-option:hover {
+      border-color: var(--button-success);
+      background: var(--bg-secondary);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
     
-    .radio-option label {
-      font-size: 14px;
-      font-weight: 400;
-      cursor: pointer;
-      margin-bottom: 0;
+    .button-option.selected {
+      border-color: var(--button-success);
+      background: var(--button-success);
+      color: white;
+      font-weight: 500;
+    }
+    
+    .button-option.selected:hover {
+      background: var(--button-success-hover);
+      border-color: var(--button-success-hover);
     }
     
     .consent-section {
@@ -523,17 +595,17 @@
       <form id="demographicsForm">
         <!-- Age -->
         <div class="demographic-field">
-          <label for="ageBand">
+          <label>
             Age
             <span class="optional-tag">(optional)</span>
           </label>
-          <select id="ageBand" name="ageBand">
-            <option value="">Prefer not to say</option>
-            <option value="18-24">18-24</option>
-            <option value="25-34">25-34</option>
-            <option value="35-44">35-44</option>
-            <option value="45+">45+</option>
-          </select>
+          <div class="button-group">
+            <button type="button" class="button-option" data-name="ageBand" data-value="18-24">18-24</button>
+            <button type="button" class="button-option" data-name="ageBand" data-value="25-34">25-34</button>
+            <button type="button" class="button-option" data-name="ageBand" data-value="35-44">35-44</button>
+            <button type="button" class="button-option" data-name="ageBand" data-value="45+">45+</button>
+            <button type="button" class="button-option" data-name="ageBand" data-value="">Prefer not to say</button>
+          </div>
         </div>
         
         <!-- Gender -->
@@ -542,111 +614,98 @@
             Gender
             <span class="optional-tag">(optional)</span>
           </label>
-          <div class="radio-group">
-            <div class="radio-option">
-              <input type="radio" id="genderMale" name="gender" value="male">
-              <label for="genderMale">Male</label>
-            </div>
-            <div class="radio-option">
-              <input type="radio" id="genderFemale" name="gender" value="female">
-              <label for="genderFemale">Female</label>
-            </div>
-            <div class="radio-option">
-              <input type="radio" id="genderOther" name="gender" value="other">
-              <label for="genderOther">Other</label>
-            </div>
-            <div class="radio-option">
-              <input type="radio" id="genderNone" name="gender" value="" checked>
-              <label for="genderNone">Prefer not to say</label>
-            </div>
+          <div class="button-group">
+            <button type="button" class="button-option" data-name="gender" data-value="male">Male</button>
+            <button type="button" class="button-option" data-name="gender" data-value="female">Female</button>
+            <button type="button" class="button-option" data-name="gender" data-value="other">Other</button>
+            <button type="button" class="button-option" data-name="gender" data-value="">Prefer not to say</button>
           </div>
         </div>
         
         <!-- Education -->
         <div class="demographic-field">
-          <label for="qualification">
+          <label>
             Education
             <span class="optional-tag">(optional)</span>
           </label>
-          <select id="qualification" name="qualification">
-            <option value="">Prefer not to say</option>
-            <option value="secondary">Secondary School</option>
-            <option value="polytechnic">Polytechnic/ITE</option>
-            <option value="bachelor">Bachelor's Degree</option>
-            <option value="master">Master's Degree</option>
-            <option value="phd">PhD</option>
-          </select>
+          <div class="button-group">
+            <button type="button" class="button-option" data-name="qualification" data-value="high-school">High School</button>
+            <button type="button" class="button-option" data-name="qualification" data-value="bachelor">Bachelor's</button>
+            <button type="button" class="button-option" data-name="qualification" data-value="master">Master's</button>
+            <button type="button" class="button-option" data-name="qualification" data-value="phd">PhD</button>
+            <button type="button" class="button-option" data-name="qualification" data-value="">Prefer not to say</button>
+          </div>
         </div>
         
         <!-- Discipline -->
         <div class="demographic-field">
-          <label for="discipline">
+          <label>
             Discipline
             <span class="optional-tag">(optional)</span>
           </label>
-          <select id="discipline" name="discipline">
-            <option value="">Prefer not to say</option>
-            <option value="stem">STEM (Science, Technology, Engineering, Math)</option>
-            <option value="non-stem">Non-STEM</option>
-            <option value="mixed">Mixed/Interdisciplinary</option>
-          </select>
+          <div class="button-group">
+            <button type="button" class="button-option" data-name="discipline" data-value="stem">STEM</button>
+            <button type="button" class="button-option" data-name="discipline" data-value="non-stem">Non-STEM</button>
+            <button type="button" class="button-option" data-name="discipline" data-value="mixed">Mixed</button>
+            <button type="button" class="button-option" data-name="discipline" data-value="">Prefer not to say</button>
+          </div>
         </div>
         
         <!-- English Proficiency -->
         <div class="demographic-field">
-          <label for="englishProficiency">
+          <label>
             English Proficiency
             <span class="optional-tag">(optional)</span>
           </label>
-          <select id="englishProficiency" name="englishProficiency">
-            <option value="">Prefer not to say</option>
-            <option value="basic">Basic</option>
-            <option value="intermediate">Intermediate</option>
-            <option value="advanced">Advanced</option>
-            <option value="native">Native Speaker</option>
-          </select>
+          <div class="button-group">
+            <button type="button" class="button-option" data-name="englishProficiency" data-value="basic">Basic</button>
+            <button type="button" class="button-option" data-name="englishProficiency" data-value="intermediate">Intermediate</button>
+            <button type="button" class="button-option" data-name="englishProficiency" data-value="advanced">Advanced</button>
+            <button type="button" class="button-option" data-name="englishProficiency" data-value="native">Native</button>
+            <button type="button" class="button-option" data-name="englishProficiency" data-value="">Prefer not to say</button>
+          </div>
         </div>
         
         <!-- Coding Experience -->
         <div class="demographic-field">
-          <label for="codingExperience">
+          <label>
             Coding Experience
             <span class="optional-tag">(optional)</span>
           </label>
-          <select id="codingExperience" name="codingExperience">
-            <option value="">Prefer not to say</option>
-            <option value="none">None</option>
-            <option value="basic">Basic</option>
-            <option value="advanced">Advanced</option>
-          </select>
+          <div class="button-group">
+            <button type="button" class="button-option" data-name="codingExperience" data-value="none">None</button>
+            <button type="button" class="button-option" data-name="codingExperience" data-value="basic">Basic</button>
+            <button type="button" class="button-option" data-name="codingExperience" data-value="advanced">Advanced</button>
+            <button type="button" class="button-option" data-name="codingExperience" data-value="">Prefer not to say</button>
+          </div>
         </div>
         
         <!-- AI Usage -->
         <div class="demographic-field">
-          <label for="llmUsage">
+          <label>
             AI Assistant Usage
             <span class="optional-tag">(optional)</span>
           </label>
-          <select id="llmUsage" name="llmUsage">
-            <option value="">Prefer not to say</option>
-            <option value="never">Never</option>
-            <option value="monthly">Monthly</option>
-            <option value="weekly">Weekly</option>
-            <option value="daily">Daily</option>
-          </select>
+          <div class="button-group">
+            <button type="button" class="button-option" data-name="llmUsage" data-value="never">Never</button>
+            <button type="button" class="button-option" data-name="llmUsage" data-value="monthly">Monthly</button>
+            <button type="button" class="button-option" data-name="llmUsage" data-value="weekly">Weekly</button>
+            <button type="button" class="button-option" data-name="llmUsage" data-value="daily">Daily</button>
+            <button type="button" class="button-option" data-name="llmUsage" data-value="">Prefer not to say</button>
+          </div>
         </div>
         
         <!-- Military Experience -->
         <div class="demographic-field">
-          <label for="military">
+          <label>
             Military Experience
             <span class="optional-tag">(optional)</span>
           </label>
-          <select id="military" name="military">
-            <option value="">Prefer not to say</option>
-            <option value="yes">Yes</option>
-            <option value="no">No</option>
-          </select>
+          <div class="button-group">
+            <button type="button" class="button-option" data-name="military" data-value="yes">Yes</button>
+            <button type="button" class="button-option" data-name="military" data-value="no">No</button>
+            <button type="button" class="button-option" data-name="military" data-value="">Prefer not to say</button>
+          </div>
         </div>
         
         <!-- Consent Section -->
@@ -678,7 +737,10 @@
     </div>
   </div>
   
-  <div class="container">
+  <!-- Header Bar -->
+  <div class="header-bar" id="headerBar" style="display: none;">
+    <div class="session-info" id="sessionInfo"></div>
+    
     <!-- Theme switcher -->
     <div class="theme-switcher">
       <button id="theme-light" title="Light mode">
@@ -707,6 +769,11 @@
         </svg>
       </button>
     </div>
+    
+    <button id="logoutBtn" class="end-session-btn">End Session</button>
+  </div>
+  
+  <div class="container">
     <!-- No branding - experimental neutrality -->
     
     <!-- Login Screen -->
@@ -725,12 +792,6 @@
     
     <!-- Main Interface (hidden initially) -->
     <div id="mainInterface" style="display: none;">
-      <div style="text-align: right; margin-bottom: 20px; color: var(--text-secondary);">
-        <span id="sessionInfo"></span>
-        <button id="logoutBtn" style="margin-left: 10px; padding: 5px 15px; background: var(--button-danger); color: white; border: none; border-radius: 4px; cursor: pointer;">
-          End Session
-        </button>
-      </div>
     
       <div class="editor-container">
         <h2 style="margin-bottom: 15px; font-size: 18px; font-weight: 700; color: var(--text-primary);">Your Prompt</h2>
@@ -848,9 +909,10 @@
       },
       
       updateCodeMirrorTheme(isDark) {
-        // Update CodeMirror theme if it exists
-        if (window.editor && window.editor.setOption) {
-          window.editor.setOption('theme', isDark ? 'monokai' : 'default');
+        // The theme is now handled by CSS based on data-theme attribute
+        // Just refresh CodeMirror to apply the new styles
+        if (window.editor && window.editor.refresh) {
+          setTimeout(() => window.editor.refresh(), 50);
         }
       }
     };
@@ -924,6 +986,7 @@
       // Hide login screen
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('mainInterface').style.display = 'block';
+      document.getElementById('headerBar').style.display = 'flex';  // Show header bar
       
       // Show session info
       document.getElementById('sessionInfo').textContent = `Session: ${sessionData.participantId}`;
@@ -956,7 +1019,6 @@
       editor = CodeMirror.fromTextArea(textarea, {
         lineNumbers: true,
         mode: 'markdown',
-        theme: isDark ? 'monokai' : 'default',
         lineWrapping: true,
         autofocus: true,
         styleActiveLine: true,
@@ -1113,40 +1175,6 @@
       document.getElementById('message').textContent = '';
     }
     
-    // Demographics Modal Functions
-    function showDemographicsModal() {
-      console.log('=== SHOWING DEMOGRAPHICS MODAL ===');
-      const modal = document.getElementById('demographicsModal');
-      if (!modal) {
-        console.error('❌ Demographics modal element not found!');
-        // Check what elements exist
-        console.log('Body children:', document.body.children.length);
-        console.log('First few body elements:', Array.from(document.body.children).slice(0, 3).map(el => el.tagName));
-        return;
-      }
-      
-      console.log('Demographics screen found, making visible...');
-      modal.classList.add('active');
-      
-      // Verify visibility
-      const computed = window.getComputedStyle(modal);
-      console.log('Modal display:', computed.display);
-      console.log('Modal visibility:', computed.visibility);
-      
-      // Setup consent checkbox
-      const consentCheckbox = document.getElementById('consent');
-      const continueBtn = document.getElementById('submitDemographics');
-      
-      if (consentCheckbox && continueBtn) {
-        console.log('Setting up consent checkbox...');
-        consentCheckbox.addEventListener('change', (e) => {
-          continueBtn.disabled = !e.target.checked;
-        });
-        continueBtn.disabled = true;
-      } else {
-        console.error('Missing form elements');
-      }
-    }
     
     function skipDemographics() {
       console.log('skipDemographics called');
@@ -1156,9 +1184,47 @@
       const modal = document.getElementById('demographicsModal');
       if (modal) {
         modal.classList.remove('active');
+        document.getElementById('headerBar').style.display = 'flex';  // Show header bar
       }
       
       showMessage('You can provide this information later if you wish.', 'success');
+    }
+    
+    // Initialize button group behavior
+    function initButtonGroups() {
+      document.querySelectorAll('.button-option').forEach(button => {
+        button.addEventListener('click', function() {
+          const groupName = this.dataset.name;
+          // Remove selected from all buttons in this group
+          document.querySelectorAll(`.button-option[data-name="${groupName}"]`).forEach(btn => {
+            btn.classList.remove('selected');
+          });
+          // Add selected to clicked button
+          this.classList.add('selected');
+        });
+      });
+    }
+    
+    // Initialize when demographics modal is shown
+    function showDemographicsModal() {
+      console.log('showDemographicsModal called');
+      const modal = document.getElementById('demographicsModal');
+      if (modal) {
+        modal.classList.add('active');
+        document.getElementById('headerBar').style.display = 'none';  // Hide header during demographics
+        initButtonGroups();  // Initialize button behavior
+        
+        // Setup consent checkbox
+        const consentCheckbox = document.getElementById('consent');
+        const continueBtn = document.getElementById('submitDemographics');
+        
+        if (consentCheckbox && continueBtn) {
+          continueBtn.disabled = !consentCheckbox.checked;
+          consentCheckbox.addEventListener('change', (e) => {
+            continueBtn.disabled = !e.target.checked;
+          });
+        }
+      }
     }
     
     // Make functions globally accessible for onclick handlers
@@ -1167,20 +1233,20 @@
     
     function submitDemographics() {
       const form = document.getElementById('demographicsForm');
-      const formData = new FormData(form);
       
+      // Collect data from button selections
       const demographics = {
         participantId: sessionData.participantId,
         timestamp: new Date().toISOString(),
-        ageBand: formData.get('ageBand') || '',
-        gender: formData.get('gender') || '',
-        qualification: formData.get('qualification') || '',
-        discipline: formData.get('discipline') || '',
-        englishProficiency: formData.get('englishProficiency') || '',
-        codingExperience: formData.get('codingExperience') || '',
-        llmUsage: formData.get('llmUsage') || '',
-        military: formData.get('military') || '',
-        consentGiven: formData.get('consent') ? true : false
+        ageBand: document.querySelector('.button-option[data-name="ageBand"].selected')?.dataset.value || '',
+        gender: document.querySelector('.button-option[data-name="gender"].selected')?.dataset.value || '',
+        qualification: document.querySelector('.button-option[data-name="qualification"].selected')?.dataset.value || '',
+        discipline: document.querySelector('.button-option[data-name="discipline"].selected')?.dataset.value || '',
+        englishProficiency: document.querySelector('.button-option[data-name="englishProficiency"].selected')?.dataset.value || '',
+        codingExperience: document.querySelector('.button-option[data-name="codingExperience"].selected')?.dataset.value || '',
+        llmUsage: document.querySelector('.button-option[data-name="llmUsage"].selected')?.dataset.value || '',
+        military: document.querySelector('.button-option[data-name="military"].selected')?.dataset.value || '',
+        consentGiven: document.getElementById('consent')?.checked || false
       };
       
       // Save to server
@@ -1191,6 +1257,7 @@
           
           const modal = document.getElementById('demographicsModal');
           modal.classList.remove('active');
+          document.getElementById('headerBar').style.display = 'flex';  // Show header bar
           
           showMessage('Thank you! Your information has been saved.', 'success');
         })
