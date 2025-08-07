@@ -985,6 +985,8 @@
   
   <script>
     let editor = null;  // Explicitly initialize as null to prevent duplicates
+    let allScenarios = [];  // Store all scenarios
+    let currentScenarioIndex = 0;  // Track current scenario
     let sessionData = {
       participantId: null,
       cohortId: 'default',
@@ -993,10 +995,15 @@
       demographicsSkipped: false
     };
     
-    // Configuration - easily adjustable
-    const CONFIG = {
-      PROMPTS_BEFORE_DEMOGRAPHICS: 1, // Set to 1 for testing, change to 3 for production
-      ENABLE_MARKDOWN: true
+    // Configuration - will be loaded from server
+    let CONFIG = {
+      PROMPTS_BEFORE_DEMOGRAPHICS: 1, // Default, will be overridden
+      ENABLE_MARKDOWN: true,
+      ENABLE_AI: true, // Default, will be overridden
+      ENABLE_CONTEXT: false, // Default, will be overridden
+      CONTEXT_WINDOW: 5, // Default, will be overridden
+      AUTO_ADVANCE_SCENARIOS: true, // Default, will be overridden
+      AUTO_CLOSE_ON_COMPLETE: true // Default, will be overridden
     };
     
     // Clean up function to prevent duplicate editors
@@ -1163,113 +1170,221 @@
       alert('Login failed: ' + error);
     }
     
-    function loadScenario() {
-      // Load scenario from backend
+    function loadAllScenarios() {
+      // Load ALL scenarios from backend
       google.script.run
-        .withSuccessHandler((scenario) => {
-          if (scenario && scenario.id) {
-            sessionData.scenarioId = scenario.id;
-            
-            // Display scenario section
-            document.getElementById('scenarioSection').style.display = 'block';
-            
-            // Set scenario text (with markdown)
-            const scenarioTextEl = document.getElementById('scenarioText');
-            if (CONFIG.ENABLE_MARKDOWN && typeof marked !== 'undefined') {
-              scenarioTextEl.innerHTML = marked.parse(scenario.text || '');
-            } else {
-              scenarioTextEl.textContent = scenario.text || '';
-            }
-            
-            // Set image or show placeholder
-            const img = document.getElementById('scenarioImage');
-            const placeholder = document.getElementById('imagePlaceholder');
-            
-            if (scenario.imageUrl && scenario.imageUrl !== '') {
-              img.src = scenario.imageUrl;
-              img.style.display = 'block';
-              placeholder.style.display = 'none';
-              
-              // Handle image load error
-              img.onerror = function() {
-                img.style.display = 'none';
-                placeholder.style.display = 'flex';
-              };
-            } else {
-              img.style.display = 'none';
-              placeholder.style.display = 'flex';
-            }
-            
-            // Create response option buttons
-            const optionsContainer = document.getElementById('responseOptions');
-            optionsContainer.innerHTML = '';
-            
-            scenario.options.forEach((option, index) => {
-              const button = document.createElement('button');
-              button.className = 'response-option';
-              button.textContent = option.text;
-              button.dataset.optionId = option.id;
-              button.dataset.score = option.score;
-              
-              button.addEventListener('click', function() {
-                // Remove previous selection
-                document.querySelectorAll('.response-option').forEach(btn => {
-                  btn.classList.remove('selected');
-                });
-                
-                // Mark as selected
-                this.classList.add('selected');
-                
-                // Store selection
-                sessionData.scenarioResponse = {
-                  optionId: option.id,
-                  text: option.text,
-                  score: option.score
-                };
-                
-                // Enable submit button
-                document.getElementById('submitResponse').disabled = false;
-                
-                // Show status
-                const status = document.getElementById('responseStatus');
-                status.textContent = 'Response selected. You can continue to explore with AI or submit when ready.';
-                status.style.display = 'block';
-              });
-              
-              optionsContainer.appendChild(button);
-            });
-            
-            // Add submit response handler
-            document.getElementById('submitResponse').addEventListener('click', function() {
-              if (sessionData.scenarioResponse) {
-                // Save response
-                google.script.run
-                  .withSuccessHandler(() => {
-                    // Disable further changes
-                    document.querySelectorAll('.response-option').forEach(btn => {
-                      btn.disabled = true;
-                      btn.style.cursor = 'not-allowed';
-                    });
-                    this.disabled = true;
-                    this.textContent = 'Response Submitted';
-                    
-                    // Update status
-                    const status = document.getElementById('responseStatus');
-                    status.textContent = `Response submitted: "${sessionData.scenarioResponse.text}"`;
-                    status.style.color = 'var(--button-success)';
-                  })
-                  .withFailureHandler((error) => {
-                    console.error('Failed to save response:', error);
-                  })
-                  .saveScenarioResponse(sessionData.participantId, sessionData.scenarioId, sessionData.scenarioResponse);
-              }
-            });
+        .withSuccessHandler((scenarios) => {
+          if (scenarios && scenarios.length > 0) {
+            allScenarios = scenarios;
+            currentScenarioIndex = 0;
+            displayCurrentScenario();
+          } else {
+            console.log('No scenarios available');
+            document.getElementById('scenarioSection').style.display = 'none';
           }
         })
         .withFailureHandler((error) => {
-          console.error('Failed to load scenario:', error);
+          console.error('Failed to load scenarios:', error);
         })
-        .getScenarioForParticipant(sessionData.participantId);
+        .getAllScenariosForParticipant(sessionData.participantId);
+    }
+    
+    function displayCurrentScenario() {
+      if (currentScenarioIndex >= allScenarios.length) {
+        // All scenarios completed - auto-end session
+        endSession();
+        return;
+      }
+      
+      const scenario = allScenarios[currentScenarioIndex];
+      sessionData.scenarioId = scenario.id;
+      sessionData.scenarioResponse = null; // Reset response for new scenario
+      
+      // Display scenario section
+      document.getElementById('scenarioSection').style.display = 'block';
+      
+      // Add progress indicator
+      const progressText = `Scenario ${currentScenarioIndex + 1} of ${allScenarios.length}`;
+      let progressEl = document.getElementById('scenarioProgress');
+      if (!progressEl) {
+        progressEl = document.createElement('div');
+        progressEl.id = 'scenarioProgress';
+        progressEl.style.cssText = 'color: var(--text-secondary); margin-bottom: 10px; font-size: 14px;';
+        document.getElementById('scenarioText').parentNode.insertBefore(progressEl, document.getElementById('scenarioText'));
+      }
+      progressEl.textContent = progressText;
+      
+      // Set scenario text (with markdown)
+      const scenarioTextEl = document.getElementById('scenarioText');
+      if (CONFIG.ENABLE_MARKDOWN && typeof marked !== 'undefined') {
+        scenarioTextEl.innerHTML = marked.parse(scenario.text || '');
+      } else {
+        scenarioTextEl.textContent = scenario.text || '';
+      }
+      
+      // Set image or show placeholder
+      const img = document.getElementById('scenarioImage');
+      const placeholder = document.getElementById('imagePlaceholder');
+      
+      if (scenario.imageUrl && scenario.imageUrl !== '') {
+        img.src = scenario.imageUrl;
+        img.style.display = 'block';
+        placeholder.style.display = 'none';
+        
+        // Handle image load error
+        img.onerror = function() {
+          img.style.display = 'none';
+          placeholder.style.display = 'flex';
+        };
+      } else {
+        img.style.display = 'none';
+        placeholder.style.display = 'flex';
+      }
+      
+      // Create response option buttons
+      const optionsContainer = document.getElementById('responseOptions');
+      optionsContainer.innerHTML = '';
+      
+      scenario.options.forEach((option, index) => {
+        const button = document.createElement('button');
+        button.className = 'response-option';
+        button.textContent = option.text;
+        button.dataset.optionId = option.id;
+        button.dataset.score = option.score;
+        
+        button.addEventListener('click', function() {
+          // Remove previous selection
+          document.querySelectorAll('.response-option').forEach(btn => {
+            btn.classList.remove('selected');
+          });
+          
+          // Mark as selected
+          this.classList.add('selected');
+          
+          // Store selection
+          sessionData.scenarioResponse = {
+            optionId: option.id,
+            text: option.text,
+            score: option.score
+          };
+          
+          // Enable submit button
+          document.getElementById('submitResponse').disabled = false;
+          
+          // Show status
+          const status = document.getElementById('responseStatus');
+          status.textContent = 'Response selected. You can continue to explore with AI or submit when ready.';
+          status.style.display = 'block';
+          status.style.color = ''; // Reset color
+        });
+        
+        optionsContainer.appendChild(button);
+      });
+      
+      // Reset submit button
+      const submitBtn = document.getElementById('submitResponse');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submit Response';
+      
+      // Clear any previous event listeners and add new one
+      const newSubmitBtn = submitBtn.cloneNode(true);
+      submitBtn.parentNode.replaceChild(newSubmitBtn, submitBtn);
+      
+      newSubmitBtn.addEventListener('click', function() {
+        if (sessionData.scenarioResponse) {
+          // Save response
+          google.script.run
+            .withSuccessHandler(() => {
+              // Disable further changes
+              document.querySelectorAll('.response-option').forEach(btn => {
+                btn.disabled = true;
+                btn.style.cursor = 'not-allowed';
+              });
+              this.disabled = true;
+              this.textContent = 'Response Submitted';
+              
+              // Update status
+              const status = document.getElementById('responseStatus');
+              status.textContent = `Response submitted: "${sessionData.scenarioResponse.text}"`;
+              status.style.color = 'var(--button-success)';
+              
+              // Auto-advance to next scenario if configured
+              if (CONFIG.AUTO_ADVANCE_SCENARIOS) {
+                setTimeout(() => {
+                  currentScenarioIndex++;
+                  displayCurrentScenario();
+                }, 2000);
+              } else {
+                // Show manual continue button
+                const status = document.getElementById('responseStatus');
+                status.innerHTML = `Response submitted: "${sessionData.scenarioResponse.text}"<br>
+                  <button onclick="currentScenarioIndex++; displayCurrentScenario();" 
+                    style="margin-top: 10px; padding: 8px 16px; background: var(--button-primary); 
+                    color: white; border: none; border-radius: 4px; cursor: pointer;">
+                    Continue to Next Scenario</button>`;
+              }
+            })
+            .withFailureHandler((error) => {
+              console.error('Failed to save response:', error);
+            })
+            .saveScenarioResponse(sessionData.participantId, sessionData.scenarioId, sessionData.scenarioResponse);
+        }
+      });
+      
+      // Clear response status
+      const status = document.getElementById('responseStatus');
+      status.textContent = '';
+      status.style.display = 'none';
+    }
+    
+    function endSession() {
+      // Calculate session duration
+      const endTime = new Date().toISOString();
+      const duration = Math.round((new Date(endTime) - new Date(sessionData.startTime)) / 1000);
+      
+      // Save session metrics
+      google.script.run
+        .withSuccessHandler(() => {
+          // Show completion message
+          document.getElementById('mainInterface').innerHTML = `
+            <div style="text-align: center; padding: 50px;">
+              <h2 style="color: var(--button-success); margin-bottom: 20px;">Session Complete!</h2>
+              <p style="color: var(--text-secondary); margin-bottom: 30px;">Thank you for participating. All scenarios have been completed.</p>
+              <p style="color: var(--text-muted); font-size: 14px;">This window will close automatically in 5 seconds...</p>
+            </div>
+          `;
+          
+          // Auto-close window if configured
+          if (CONFIG.AUTO_CLOSE_ON_COMPLETE) {
+            setTimeout(() => {
+              window.close();
+              // Fallback if window.close() doesn't work
+              document.body.innerHTML = '<div style="text-align: center; padding: 50px;"><h3>You may now close this window.</h3></div>';
+            }, 5000);
+          }
+        })
+        .withFailureHandler(() => {
+          // Still show completion even if save fails
+          document.getElementById('mainInterface').innerHTML = `
+            <div style="text-align: center; padding: 50px;">
+              <h2>Session Complete</h2>
+              <p>You may now close this window.</p>
+            </div>
+          `;
+        })
+        .saveSessionMetrics(sessionData.participantId, {
+          startTime: sessionData.startTime,
+          endTime: endTime,
+          durationSeconds: duration,
+          totalTokensUsed: sessionData.totalTokensUsed || 0,
+          promptCount: sessionData.promptCount || 0,
+          scenariosCompleted: currentScenarioIndex
+        });
+    }
+    
+    function loadScenario() {
+      // Legacy function - redirects to new function
+      loadAllScenarios();
     }
     
     function initializeMainInterface() {
@@ -1279,8 +1394,47 @@
         return;
       }
       
-      // Load scenario
-      loadScenario();
+      // Load configuration from server first
+      google.script.run
+        .withSuccessHandler((serverConfig) => {
+          // Update local config
+          if (serverConfig) {
+            CONFIG.ENABLE_AI = serverConfig.enableAI;
+            CONFIG.ENABLE_CONTEXT = serverConfig.enableContext;
+            CONFIG.CONTEXT_WINDOW = serverConfig.contextWindow;
+            CONFIG.PROMPTS_BEFORE_DEMOGRAPHICS = serverConfig.promptsBeforeDemographics;
+            CONFIG.AUTO_ADVANCE_SCENARIOS = serverConfig.autoAdvanceScenarios;
+            CONFIG.AUTO_CLOSE_ON_COMPLETE = serverConfig.autoCloseOnComplete;
+            
+            // Hide/show AI section based on config
+            const aiSection = document.getElementById('aiSection');
+            if (aiSection) {
+              aiSection.style.display = CONFIG.ENABLE_AI ? 'block' : 'none';
+            }
+            
+            // If AI is disabled, also hide the prompt editor section
+            if (!CONFIG.ENABLE_AI) {
+              const promptSection = document.querySelector('.prompt-section');
+              if (promptSection) {
+                promptSection.style.display = 'none';
+              }
+            }
+          }
+          
+          // Continue with initialization
+          initializeMainInterfaceContinue();
+        })
+        .withFailureHandler((error) => {
+          console.error('Failed to load config, using defaults:', error);
+          // Continue with defaults
+          initializeMainInterfaceContinue();
+        })
+        .getClientConfig();
+    }
+    
+    function initializeMainInterfaceContinue() {
+      // Load all scenarios
+      loadAllScenarios();
       
       // Initialize CodeMirror with better defaults
       // Get current theme for CodeMirror

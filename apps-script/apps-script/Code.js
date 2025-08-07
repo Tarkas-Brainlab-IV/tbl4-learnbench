@@ -1,21 +1,12 @@
 // Main entry point for the web app
-function doGet(e) {
+function doGet() {
   try {
-    // Check if this is demographics page request
-    if (e.parameter.page === 'demographics') {
-      return HtmlService.createHtmlOutputFromFile('demographics-form')
-        .setTitle('Study Information')
-        .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
-        .addMetaTag('viewport', 'width=device-width, initial-scale=1');
-    }
-    
-    // Default to main interface
     return HtmlService.createHtmlOutputFromFile('index')
       .setTitle('Session')
       .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
       .addMetaTag('viewport', 'width=device-width, initial-scale=1');
   } catch (error) {
-    // Return error page if files are not found
+    // Return error page if index.html is not found
     return HtmlService.createHtmlOutput(`
       <h1>Error Loading Application</h1>
       <p>Error: ${error.toString()}</p>
@@ -59,117 +50,16 @@ function generateParticipantHash(nricLast4) {
   }
 }
 
-// Client-accessible function to get configuration
-function getClientConfig() {
-  const config = getConfig();
-  // Return only client-relevant settings
-  return {
-    enableAI: config.enableAI,
-    enableContext: config.enableContext,
-    contextWindow: config.contextWindow,
-    enableDemographics: config.enableDemographics,
-    promptsBeforeDemographics: config.promptsBeforeDemographics,
-    autoAdvanceScenarios: config.autoAdvanceScenarios,
-    autoCloseOnComplete: config.autoCloseOnComplete
-  };
-}
-
 // Admin configuration - Set these in Script Properties
 function getConfig() {
-  // First try to get config from Setup sheet
-  try {
-    const sheet = getOrCreateSheet();
-    const ss = sheet.getParent();
-    let setupSheet = ss.getSheetByName('Setup');
-    
-    if (!setupSheet) {
-      setupSheet = createSetupSheet(ss);
-    }
-    
-    // Read setup values (B column contains values)
-    const setupData = setupSheet.getRange('B2:B10').getValues();
-    
-    return {
-      enableAI: setupData[0][0] !== false, // B2 - Enable AI Assistance
-      enableContext: setupData[1][0] === true, // B3 - Enable Context (Multi-turn)
-      contextWindow: parseInt(setupData[2][0] || 5), // B4 - Context Window Size
-      enableDemographics: setupData[3][0] !== false, // B5 - Enable Demographics
-      promptsBeforeDemographics: parseInt(setupData[4][0] || 3), // B6 - Prompts Before Demographics
-      autoAdvanceScenarios: setupData[5][0] !== false, // B7 - Auto-advance Scenarios
-      autoCloseOnComplete: setupData[6][0] !== false, // B8 - Auto-close on Complete
-      geminiApiKey: PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY'),
-      allowOutOfClass: setupData[7][0] !== false, // B9 - Allow Out of Class
-      timezone: setupData[8][0] || 'Asia/Singapore' // B10 - Timezone
-    };
-  } catch (error) {
-    console.error('Error reading setup sheet, using defaults:', error);
-    // Fallback to script properties
-    const props = PropertiesService.getScriptProperties();
-    return {
-      enableAI: true,
-      enableContext: props.getProperty('ENABLE_CONTEXT') === 'true' || false,
-      contextWindow: parseInt(props.getProperty('CONTEXT_WINDOW') || '5'),
-      enableDemographics: true,
-      promptsBeforeDemographics: parseInt(props.getProperty('PROMPTS_BEFORE_DEMOGRAPHICS') || '3'),
-      autoAdvanceScenarios: true,
-      autoCloseOnComplete: true,
-      geminiApiKey: props.getProperty('GEMINI_API_KEY'),
-      allowOutOfClass: props.getProperty('ALLOW_OUT_OF_CLASS') === 'true' || false,
-      timezone: props.getProperty('TIMEZONE') || 'Asia/Singapore'
-    };
-  }
-}
-
-// Create setup sheet with default values
-function createSetupSheet(spreadsheet) {
-  const sheet = spreadsheet.insertSheet('Setup');
-  
-  // Set headers and default values
-  const setupData = [
-    ['Setting', 'Value', 'Description'],
-    ['Enable AI Assistance', true, 'Show/hide AI prompt and response sections'],
-    ['Enable Context (Multi-turn)', false, 'Allow AI to remember conversation history'],
-    ['Context Window Size', 5, 'Number of previous exchanges to remember'],
-    ['Enable Demographics', true, 'Collect demographic information'],
-    ['Prompts Before Demographics', 3, 'Number of AI prompts before showing demographics (if AI disabled, shows after N scenarios)'],
-    ['Auto-advance Scenarios', true, 'Automatically advance to next scenario after submission'],
-    ['Auto-close on Complete', true, 'Close browser window after final scenario'],
-    ['Allow Out of Class', true, 'Allow submissions outside scheduled class times'],
-    ['Timezone', 'Asia/Singapore', 'Timezone for class schedule']
-  ];
-  
-  // Set data
-  sheet.getRange(1, 1, setupData.length, 3).setValues(setupData);
-  
-  // Format headers
-  sheet.getRange(1, 1, 1, 3).setFontWeight('bold');
-  sheet.getRange(1, 1, 1, 3).setBackground('#f0f0f0');
-  
-  // Set column widths
-  sheet.setColumnWidth(1, 200);
-  sheet.setColumnWidth(2, 150);
-  sheet.setColumnWidth(3, 400);
-  
-  // Freeze header row
-  sheet.setFrozenRows(1);
-  
-  // Add data validation for boolean fields
-  const booleanRule = SpreadsheetApp.newDataValidation()
-    .requireCheckbox()
-    .build();
-  
-  sheet.getRange('B2:B5').setDataValidation(booleanRule);
-  sheet.getRange('B7:B9').setDataValidation(booleanRule);
-  
-  return sheet;
-}
-
-// Get demographics configuration
-function getDemographicsConfig() {
   const props = PropertiesService.getScriptProperties();
   return {
-    promptsBeforeDemographics: parseInt(props.getProperty('PROMPTS_BEFORE_DEMOGRAPHICS') || '1'),
-    enableDemographics: props.getProperty('ENABLE_DEMOGRAPHICS') !== 'false' // Default true
+    enableContext: props.getProperty('ENABLE_CONTEXT') === 'true' || false,
+    contextWindow: parseInt(props.getProperty('CONTEXT_WINDOW') || '5'), // Last N exchanges
+    geminiApiKey: props.getProperty('GEMINI_API_KEY'),
+    classSchedule: JSON.parse(props.getProperty('CLASS_SCHEDULE') || '[]'), // Array of class times
+    timezone: props.getProperty('TIMEZONE') || 'Asia/Singapore',
+    allowOutOfClass: props.getProperty('ALLOW_OUT_OF_CLASS') === 'true' || false
   };
 }
 
@@ -500,53 +390,28 @@ function processPrompt(data) {
     }
     
     // Log to spreadsheet with smart cohort and status
-    const rowData = [
+    sheet.appendRow([
       timestamp,
       data.participantId,
       cohortInfo.cohort, // Smart cohort detection
       data.prompt,
       geminiResponse.output,
+      geminiResponse.model,
+      geminiResponse.tokens,
       geminiResponse.processingTime,
       cohortInfo.inClass ? 'IN-CLASS' : 'OUT-OF-CLASS', // Status
       cohortInfo.note || '' // Additional notes
-    ];
-    
-    // Use safe append to handle large content
-    safeAppendRow(sheet, rowData);
+    ]);
     
     console.log('Successfully logged to sheet with cohort:', cohortInfo.cohort);
-    
-    // Check if demographics needed (simplified for now)
-    let needsDemographics = false;
-    try {
-      // Count submissions by this participant in current data
-      const currentData = sheet.getDataRange().getValues();
-      let submissionCount = 0;
-      for (let i = 1; i < currentData.length; i++) {
-        if (currentData[i][1] === data.participantId) {
-          submissionCount++;
-        }
-      }
-      
-      // Only show demographics after first submission
-      // For now, we'll just track it client-side with sessionStorage
-      needsDemographics = (submissionCount === 1);
-      
-    } catch (e) {
-      console.log('Demographics check error:', e);
-      needsDemographics = false;
-    }
     
     // Return response to client
     return {
       success: true,
       output: geminiResponse.output,
       model: geminiResponse.model,
-      tokenUsage: {
-        totalTokens: geminiResponse.tokens || 0
-      },
-      timestamp: timestamp.toISOString(),
-      needsDemographics: needsDemographics
+      tokens: geminiResponse.tokens,
+      timestamp: timestamp.toISOString()
     };
     
   } catch (error) {
@@ -562,50 +427,24 @@ function processPrompt(data) {
 
 // Get or create the logging spreadsheet
 function getOrCreateSheet() {
-  // Delegate to the robust sheet manager if it exists
-  if (typeof getLogSheet !== 'undefined') {
-    return getLogSheet();
-  }
-  
-  // Fallback to direct implementation
+  const SPREADSHEET_NAME = 'PromptLab - Prompt Data';
   const SHEET_NAME = 'Prompts';
-  
-  // Get SPREADSHEET_ID from script properties
-  const SPREADSHEET_ID = PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID');
-  
-  if (!SPREADSHEET_ID) {
-    throw new Error('SPREADSHEET_ID not found in script properties. Please run quickSetup() or add it in Project Settings → Script Properties');
-  }
   
   let spreadsheet;
   
-  try {
-    // Open the spreadsheet by ID (fixed: was using SpreadsheetApp.open which caused errors)
-    spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
-  } catch (error) {
-    console.error('Error opening spreadsheet:', error);
-    throw new Error('Failed to open spreadsheet. Please check the SPREADSHEET_ID in script properties.');
+  // Try to find existing spreadsheet
+  const files = DriveApp.getFilesByName(SPREADSHEET_NAME);
+  if (files.hasNext()) {
+    spreadsheet = SpreadsheetApp.open(files.next());
+  } else {
+    // Create new spreadsheet
+    spreadsheet = SpreadsheetApp.create(SPREADSHEET_NAME);
   }
   
   // Get or create sheet
   let sheet = spreadsheet.getSheetByName(SHEET_NAME);
   if (!sheet) {
     sheet = spreadsheet.insertSheet(SHEET_NAME);
-  }
-  
-  // ALWAYS check if headers exist (in case of existing sheet without headers)
-  const firstRow = sheet.getRange(1, 1, 1, 10).getValues()[0];
-  const hasHeaders = firstRow[0] === 'Timestamp' || firstRow[0] === 'timestamp';
-  
-  if (!hasHeaders) {
-    console.log('Headers missing - adding them now...');
-    
-    // Check if there's existing data that needs to be moved down
-    const lastRow = sheet.getLastRow();
-    if (lastRow > 0) {
-      // There's existing data - insert a row at the top
-      sheet.insertRowBefore(1);
-    }
     
     // Add headers
     sheet.getRange(1, 1, 1, 10).setValues([[
@@ -629,8 +468,6 @@ function getOrCreateSheet() {
     
     // Auto-resize columns
     sheet.autoResizeColumns(1, 10);
-    
-    console.log('Headers added successfully');
   }
   
   return sheet;
@@ -938,165 +775,9 @@ function setupScriptProperties() {
   
   // Set these properties in the Apps Script editor:
   // File > Project Properties > Script Properties
-  scriptProperties.setProperty('SPREADSHEET_ID', '1152xJb3pqhug19ExNKCdAFy1sSvMa2GyJIVoEkLd29o');
   scriptProperties.setProperty('GEMINI_API_KEY', 'YOUR_API_KEY_HERE');
   scriptProperties.setProperty('ENABLE_CONTEXT', 'false'); // Set to 'true' to enable conversation memory
   scriptProperties.setProperty('CONTEXT_WINDOW', '5'); // Number of previous exchanges to remember
-  scriptProperties.setProperty('ALLOW_OUT_OF_CLASS', 'true'); // Allow submissions outside class hours
-}
-
-// Sanity check function to verify SpreadsheetApp is not shadowed
-function sanityCheck() {
-  console.log('SpreadsheetApp type:', typeof SpreadsheetApp);
-  console.log('SpreadsheetApp has openById:', typeof SpreadsheetApp.openById === 'function');
-  console.log('Available methods (first 10):', Object.keys(SpreadsheetApp).slice(0, 10).join(', '));
-  
-  try {
-    const ss = SpreadsheetApp.openById('1152xJb3pqhug19ExNKCdAFy1sSvMa2GyJIVoEkLd29o');
-    console.log('✅ Successfully opened spreadsheet:', ss.getName());
-    return true;
-  } catch (error) {
-    console.error('❌ Failed to open spreadsheet:', error.toString());
-    return false;
-  }
-}
-
-// Function to add headers to existing sheet - RUN THIS IF HEADERS ARE MISSING
-function addHeadersToSheet() {
-  try {
-    const SPREADSHEET_ID = PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID');
-    if (!SPREADSHEET_ID) {
-      console.error('No SPREADSHEET_ID found. Run quickSetup() first.');
-      return false;
-    }
-    
-    const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
-    const sheet = spreadsheet.getSheetByName('Prompts');
-    
-    if (!sheet) {
-      console.error('Prompts sheet not found');
-      return false;
-    }
-    
-    // Check current first row
-    const firstRow = sheet.getRange(1, 1, 1, 10).getValues()[0];
-    const hasHeaders = firstRow[0] === 'Timestamp' || firstRow[0] === 'timestamp';
-    
-    if (hasHeaders) {
-      console.log('Headers already exist!');
-      return true;
-    }
-    
-    // Insert row at top for headers
-    const lastRow = sheet.getLastRow();
-    if (lastRow > 0) {
-      sheet.insertRowBefore(1);
-      console.log('Moved existing data down one row');
-    }
-    
-    // Add headers
-    sheet.getRange(1, 1, 1, 10).setValues([[
-      'Timestamp',
-      'Participant ID',
-      'Cohort ID',
-      'Prompt',
-      'AI Response',
-      'Model',
-      'Token Count',
-      'Processing Time (ms)',
-      'Status',
-      'Notes'
-    ]]);
-    
-    // Format headers
-    sheet.getRange(1, 1, 1, 10)
-      .setFontWeight('bold')
-      .setBackground('#4CAF50')
-      .setFontColor('#FFFFFF');
-    
-    // Set column widths for better readability
-    sheet.setColumnWidth(1, 180); // Timestamp
-    sheet.setColumnWidth(2, 120); // Participant ID
-    sheet.setColumnWidth(3, 120); // Cohort ID
-    sheet.setColumnWidth(4, 300); // Prompt
-    sheet.setColumnWidth(5, 400); // AI Response
-    sheet.setColumnWidth(6, 100); // Model
-    sheet.setColumnWidth(7, 100); // Token Count
-    sheet.setColumnWidth(8, 140); // Processing Time
-    sheet.setColumnWidth(9, 100); // Status
-    sheet.setColumnWidth(10, 200); // Notes
-    
-    // Freeze the header row
-    sheet.setFrozenRows(1);
-    
-    console.log('✅ Headers added successfully!');
-    console.log('✅ Column widths set');
-    console.log('✅ Header row frozen');
-    
-    return true;
-    
-  } catch (error) {
-    console.error('Error adding headers:', error);
-    return false;
-  }
-}
-
-// Quick setup function - RUN THIS FIRST!
-function quickSetup() {
-  // First verify SpreadsheetApp is working
-  console.log('=== PromptLab Quick Setup ===');
-  console.log('Checking SpreadsheetApp availability...');
-  console.log('SpreadsheetApp type:', typeof SpreadsheetApp);
-  console.log('Has openById method:', typeof SpreadsheetApp.openById === 'function');
-  
-  const scriptProperties = PropertiesService.getScriptProperties();
-  
-  // Set the spreadsheet ID
-  scriptProperties.setProperty('SPREADSHEET_ID', '1152xJb3pqhug19ExNKCdAFy1sSvMa2GyJIVoEkLd29o');
-  scriptProperties.setProperty('ALLOW_OUT_OF_CLASS', 'true');
-  scriptProperties.setProperty('PROMPTS_BEFORE_DEMOGRAPHICS', '1'); // Set to 1 for testing, 3 for production
-  scriptProperties.setProperty('ENABLE_DEMOGRAPHICS', 'true');
-  
-  // Check if we can access the spreadsheet
-  try {
-    const spreadsheet = SpreadsheetApp.openById('1152xJb3pqhug19ExNKCdAFy1sSvMa2GyJIVoEkLd29o');
-    console.log('✅ Successfully connected to spreadsheet:', spreadsheet.getName());
-    
-    // Check for the Prompts sheet
-    const sheet = spreadsheet.getSheetByName('Prompts');
-    if (sheet) {
-      console.log('✅ Found "Prompts" sheet with', sheet.getLastRow(), 'rows');
-    } else {
-      console.log('⚠️ "Prompts" sheet not found - will be created on first use');
-    }
-    
-    // Check for Gemini API key
-    const apiKey = scriptProperties.getProperty('GEMINI_API_KEY');
-    if (apiKey && apiKey !== 'YOUR_API_KEY_HERE' && apiKey.length > 10) {
-      console.log('✅ Gemini API key is set');
-    } else {
-      console.log('❌ Please set GEMINI_API_KEY in Script Properties');
-      console.log('   Get your key from: https://aistudio.google.com/app/apikey');
-    }
-    
-    console.log('\n=== Setup Summary ===');
-    console.log('Spreadsheet ID:', scriptProperties.getProperty('SPREADSHEET_ID'));
-    console.log('Allow out-of-class:', scriptProperties.getProperty('ALLOW_OUT_OF_CLASS'));
-    console.log('Context enabled:', scriptProperties.getProperty('ENABLE_CONTEXT') || 'false');
-    
-    return {
-      success: true,
-      spreadsheetConnected: true,
-      message: 'Setup complete! Remember to set GEMINI_API_KEY if not already done.'
-    };
-    
-  } catch (error) {
-    console.error('❌ Error during setup:', error);
-    return {
-      success: false,
-      error: error.toString()
-    };
-  }
 }
 
 // Admin function to toggle context feature
@@ -1121,360 +802,6 @@ function setClassSchedule(schedule) {
 function setAllowOutOfClass(allowed) {
   PropertiesService.getScriptProperties().setProperty('ALLOW_OUT_OF_CLASS', allowed ? 'true' : 'false');
   console.log('Out-of-class submissions:', allowed ? 'ALLOWED' : 'BLOCKED');
-}
-
-// Function to save scenario response
-function saveScenarioResponse(participantId, scenarioId, response) {
-  try {
-    const sheet = getOrCreateSheet();
-    const ss = sheet.getParent();
-    
-    // Find or create scenario responses sheet
-    let responsesSheet = ss.getSheetByName('Scenario_Responses');
-    
-    if (!responsesSheet) {
-      responsesSheet = ss.insertSheet('Scenario_Responses');
-      // Add headers
-      responsesSheet.getRange(1, 1, 1, 6).setValues([[
-        'Participant ID',
-        'Scenario ID',
-        'Option Selected',
-        'Response Text',
-        'Score',
-        'Timestamp'
-      ]]);
-      responsesSheet.getRange(1, 1, 1, 6).setFontWeight('bold');
-    }
-    
-    // Append response
-    responsesSheet.appendRow([
-      participantId,
-      scenarioId,
-      response.optionId,
-      response.text,
-      response.score,
-      new Date().toISOString()
-    ]);
-    
-    console.log('Scenario response saved for participant:', participantId);
-    return { success: true };
-  } catch (error) {
-    console.error('Error saving scenario response:', error);
-    return { success: false, error: error.toString() };
-  }
-}
-
-// Function to get ALL scenarios for a participant (for sequential presentation)
-function getAllScenariosForParticipant(participantId) {
-  try {
-    const sheet = getOrCreateSheet();
-    const ss = sheet.getParent();
-    
-    // Check for scenarios sheet
-    let scenariosSheet = ss.getSheetByName('Scenarios');
-    
-    if (!scenariosSheet) {
-      // Create example scenarios sheet if it doesn't exist
-      scenariosSheet = createExampleScenariosSheet(ss);
-    }
-    
-    // Get all scenarios
-    const data = scenariosSheet.getDataRange().getValues();
-    const headers = data[0];
-    const scenarios = [];
-    
-    // Parse scenarios from sheet
-    for (let i = 1; i < data.length; i++) {
-      const row = data[i];
-      if (row[0] && row[1]) { // If ScenarioID and ScenarioText exist
-        const scenario = {
-          id: row[0],
-          text: row[1],
-          imageUrl: row[2] || null,
-          options: []
-        };
-        
-        // Parse up to 5 options
-        for (let j = 0; j < 5; j++) {
-          const optionIdx = 3 + (j * 2); // Option1 at index 3, Option2 at 5, etc.
-          const scoreIdx = 4 + (j * 2);  // Score1 at index 4, Score2 at 6, etc.
-          
-          if (row[optionIdx]) {
-            scenario.options.push({
-              id: `option_${j + 1}`,
-              text: row[optionIdx],
-              score: row[scoreIdx] || 0
-            });
-          }
-        }
-        
-        if (scenario.options.length > 0) {
-          scenarios.push(scenario);
-        }
-      }
-    }
-    
-    return scenarios; // Return ALL scenarios
-    
-  } catch (error) {
-    console.error('Error getting scenarios:', error);
-    return [];
-  }
-}
-
-// Legacy function - kept for backward compatibility
-function getScenarioForParticipant(participantId) {
-  const scenarios = getAllScenariosForParticipant(participantId);
-  
-  if (!scenarios || scenarios.length === 0) {
-    return null;
-  }
-  
-  // Return first scenario for legacy support
-  const scenarioIndex = hashCode(participantId) % scenarios.length;
-  return scenarios[Math.abs(scenarioIndex)];
-}
-
-// Helper function to create hash from string
-function hashCode(str) {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32bit integer
-  }
-  return hash;
-}
-
-// Create example scenarios sheet
-function createExampleScenariosSheet(spreadsheet) {
-  const sheet = spreadsheet.insertSheet('Scenarios');
-  
-  // Set headers
-  const headers = [
-    'ScenarioID', 'ScenarioText', 'ImageURL',
-    'Option1', 'Score1', 'Option2', 'Score2', 
-    'Option3', 'Score3', 'Option4', 'Score4',
-    'Option5', 'Score5'
-  ];
-  
-  // Example scenario
-  const exampleScenario = [
-    'S001',
-    '## Emergency Response\n\nYou are the first to arrive at a multi-vehicle accident on a highway. There are:\n- 3 vehicles involved\n- Smoke coming from one engine\n- Multiple people appear injured\n- Traffic is building up\n\nWhat is your **first** priority action?',
-    'https://via.placeholder.com/600x400/333/fff?text=Accident+Scene',
-    'Ensure your own safety and assess the scene', 10,
-    'Immediately start helping injured people', 5,
-    'Call emergency services (995)', 8,
-    'Direct traffic away from the accident', 3,
-    'Take photos for insurance purposes', 0
-  ];
-  
-  // Set data
-  sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
-  sheet.getRange(2, 1, 1, exampleScenario.length).setValues([exampleScenario]);
-  
-  // Format headers
-  sheet.getRange(1, 1, 1, headers.length).setFontWeight('bold');
-  sheet.setFrozenRows(1);
-  
-  return sheet;
-}
-
-// Function to save session metrics
-function saveSessionMetrics(participantId, metrics) {
-  try {
-    const sheet = getOrCreateSheet();
-    
-    // Find or create a metrics sheet
-    const ss = sheet.getParent();
-    let metricsSheet = ss.getSheetByName('Session_Metrics');
-    
-    if (!metricsSheet) {
-      metricsSheet = ss.insertSheet('Session_Metrics');
-      // Add headers with scenario columns
-      metricsSheet.getRange(1, 1, 1, 11).setValues([[
-        'Participant ID',
-        'Start Time',
-        'End Time',
-        'Duration (seconds)',
-        'Total Tokens Used',
-        'Prompt Count',
-        'Scenario ID',
-        'Response Option',
-        'Response Score',
-        'Response Text',
-        'Date'
-      ]]);
-      metricsSheet.getRange(1, 1, 1, 11).setFontWeight('bold');
-    }
-    
-    // Append metrics data
-    metricsSheet.appendRow([
-      participantId,
-      metrics.startTime,
-      metrics.endTime,
-      metrics.durationSeconds,
-      metrics.totalTokensUsed,
-      metrics.promptCount,
-      metrics.scenarioId || '',
-      metrics.scenarioResponse?.optionId || '',
-      metrics.scenarioResponse?.score || '',
-      metrics.scenarioResponse?.text || '',
-      new Date().toISOString()
-    ]);
-    
-    console.log('Session metrics saved for participant:', participantId);
-    return { success: true };
-  } catch (error) {
-    console.error('Error saving session metrics:', error);
-    return { success: false, error: error.toString() };
-  }
-}
-
-// Save demographics data to a separate, protected sheet
-function saveDemographics(demographics) {
-  try {
-    const SPREADSHEET_ID = PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID');
-    if (!SPREADSHEET_ID) {
-      throw new Error('SPREADSHEET_ID not configured');
-    }
-    
-    const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
-    
-    // Get or create Demographics sheet
-    let demographicsSheet = spreadsheet.getSheetByName('Demographics');
-    if (!demographicsSheet) {
-      demographicsSheet = spreadsheet.insertSheet('Demographics');
-      
-      // Add headers if new sheet
-      const headers = [
-        'Timestamp',
-        'Participant ID',
-        'Age Band',
-        'Gender', 
-        'Qualification',
-        'Discipline',
-        'English Proficiency',
-        'Coding Experience',
-        'LLM Usage',
-        'Occupation',
-        'Consent Given',
-        'Collection Method'
-      ];
-      
-      demographicsSheet.getRange(1, 1, 1, headers.length).setValues([headers]);
-      
-      // Format headers
-      demographicsSheet.getRange(1, 1, 1, headers.length)
-        .setFontWeight('bold')
-        .setBackground('#2196F3')
-        .setFontColor('#FFFFFF');
-      
-      // Set column widths
-      demographicsSheet.setColumnWidth(1, 180); // Timestamp
-      demographicsSheet.setColumnWidth(2, 120); // Participant ID
-      demographicsSheet.setColumnWidth(3, 100); // Age Band
-      demographicsSheet.setColumnWidth(4, 100); // Gender
-      demographicsSheet.setColumnWidth(5, 150); // Qualification
-      demographicsSheet.setColumnWidth(6, 150); // Discipline
-      demographicsSheet.setColumnWidth(7, 150); // English Proficiency
-      demographicsSheet.setColumnWidth(8, 150); // Coding Experience
-      demographicsSheet.setColumnWidth(9, 120); // LLM Usage
-      demographicsSheet.setColumnWidth(10, 150); // Occupation
-      demographicsSheet.setColumnWidth(11, 120); // Consent
-      demographicsSheet.setColumnWidth(12, 150); // Collection Method
-      
-      // Freeze header row
-      demographicsSheet.setFrozenRows(1);
-      
-      // IMPORTANT: Protect the sheet - only script owner can edit
-      const protection = demographicsSheet.protect();
-      protection.setDescription('Demographics data - Protected');
-      protection.setWarningOnly(false);
-      // Remove all editors except the owner
-      protection.removeEditors(protection.getEditors());
-      if (protection.canDomainEdit()) {
-        protection.setDomainEdit(false);
-      }
-      
-      console.log('Created and protected Demographics sheet');
-    }
-    
-    // Check if participant already submitted demographics
-    const existingData = demographicsSheet.getDataRange().getValues();
-    const participantCol = 1; // Participant ID column (0-indexed)
-    
-    for (let i = 1; i < existingData.length; i++) {
-      if (existingData[i][participantCol] === demographics.participantId) {
-        console.log('Demographics already recorded for participant:', demographics.participantId);
-        return {
-          success: true,
-          message: 'Demographics already on file',
-          updated: false
-        };
-      }
-    }
-    
-    // Add new demographics row
-    const row = [
-      new Date(), // Timestamp
-      demographics.participantId,
-      demographics.ageBand || '',
-      demographics.gender || '',
-      demographics.qualification || '',
-      demographics.discipline || '',
-      demographics.englishProficiency || '',
-      demographics.codingExperience || '',
-      demographics.llmUsage || '',
-      demographics.occupation || '',
-      demographics.consentGiven ? 'Yes' : 'No',
-      'After 3 prompts' // Collection method
-    ];
-    
-    demographicsSheet.appendRow(row);
-    
-    console.log('Demographics saved for participant:', demographics.participantId);
-    
-    return {
-      success: true,
-      message: 'Demographics saved successfully',
-      updated: true
-    };
-    
-  } catch (error) {
-    console.error('Error saving demographics:', error);
-    throw error;
-  }
-}
-
-// Function to check if demographics exist for a participant
-function checkDemographicsStatus(participantId) {
-  try {
-    const SPREADSHEET_ID = PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID');
-    if (!SPREADSHEET_ID) return { hasDemographics: false };
-    
-    const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
-    const demographicsSheet = spreadsheet.getSheetByName('Demographics');
-    
-    if (!demographicsSheet) return { hasDemographics: false };
-    
-    const data = demographicsSheet.getDataRange().getValues();
-    for (let i = 1; i < data.length; i++) {
-      if (data[i][1] === participantId) {
-        return { 
-          hasDemographics: true,
-          collectedAt: data[i][0]
-        };
-      }
-    }
-    
-    return { hasDemographics: false };
-    
-  } catch (error) {
-    console.error('Error checking demographics status:', error);
-    return { hasDemographics: false };
-  }
 }
 
 // Helper to set up default Singapore class schedule
@@ -1715,5 +1042,4 @@ function doGetTest() {
   } catch (error) {
     return HtmlService.createHtmlOutput('Error: ' + error.toString());
   }
-}// Force update Wed  6 Aug 2025 15:58:51 +07
-// Force update Wed  6 Aug 2025 16:02:05 +07
+}
