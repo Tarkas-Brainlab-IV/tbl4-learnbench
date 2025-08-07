@@ -714,6 +714,119 @@
       cursor: not-allowed;
       opacity: 0.6;
     }
+    
+    /* Markdown table styles for scenarios */
+    #scenarioText table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    
+    #scenarioText th,
+    #scenarioText td {
+      padding: 12px 16px;
+      text-align: left;
+      border: 1px solid var(--border-color);
+    }
+    
+    #scenarioText th {
+      background: var(--bg-secondary);
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    
+    #scenarioText td {
+      color: var(--text-secondary);
+    }
+    
+    #scenarioText tr:nth-child(even) {
+      background: rgba(255, 255, 255, 0.02);
+    }
+    
+    #scenarioText tr:hover {
+      background: var(--bg-secondary);
+    }
+    
+    /* Dark mode table styles */
+    [data-theme="dark"] #scenarioText table {
+      background: #1a1a1a;
+    }
+    
+    [data-theme="dark"] #scenarioText th {
+      background: #2a2a2a;
+    }
+    
+    [data-theme="dark"] #scenarioText td {
+      color: #b0b0b0;
+    }
+    
+    /* Light mode table styles */
+    [data-theme="light"] #scenarioText table {
+      background: white;
+    }
+    
+    [data-theme="light"] #scenarioText th {
+      background: #f5f5f5;
+    }
+    
+    [data-theme="light"] #scenarioText td {
+      color: #555;
+    }
+    
+    /* Markdown formatting improvements */
+    #scenarioText h1,
+    #scenarioText h2,
+    #scenarioText h3 {
+      margin-top: 1.5em;
+      margin-bottom: 0.5em;
+      color: var(--text-primary);
+      font-weight: 700;
+    }
+    
+    #scenarioText h1 { font-size: 2em; }
+    #scenarioText h2 { font-size: 1.5em; }
+    #scenarioText h3 { font-size: 1.2em; }
+    
+    #scenarioText ul,
+    #scenarioText ol {
+      margin: 1em 0;
+      padding-left: 2em;
+    }
+    
+    #scenarioText li {
+      margin: 0.5em 0;
+      line-height: 1.6;
+      color: var(--text-secondary);
+    }
+    
+    #scenarioText p {
+      margin: 1em 0;
+      line-height: 1.6;
+    }
+    
+    #scenarioText strong {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+    
+    #scenarioText code {
+      background: var(--bg-secondary);
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9em;
+    }
+    
+    #scenarioText blockquote {
+      border-left: 4px solid var(--border-color);
+      padding-left: 1em;
+      margin: 1em 0;
+      color: var(--text-muted);
+    }
   </style>
 </head>
 <body>
@@ -953,25 +1066,28 @@
         </div>
       </div>
     
-      <div class="editor-container">
-        <h2 style="margin-bottom: 15px; font-size: 18px; font-weight: 700; color: var(--text-primary);">Your Prompt</h2>
-        <textarea id="prompt" placeholder="Type your prompt here..."></textarea>
-      </div>
-      
-      <div class="button-group">
-        <button id="submit" class="submit-btn">Submit Prompt</button>
-        <button id="clear" class="clear-btn">Clear</button>
-      </div>
-      
-      <div id="message"></div>
-      
-      <div class="output-section">
-        <h2 style="margin-bottom: 15px; font-size: 18px; font-weight: 700; color: var(--text-primary);">AI Response</h2>
-        <div id="output" class="output-container">
-          <span style="color: var(--text-muted); font-weight: 400;">Waiting for prompt submission...</span>
+      <!-- AI Assistance Section -->
+      <div id="aiSection">
+        <div class="editor-container">
+          <h2 style="margin-bottom: 15px; font-size: 18px; font-weight: 700; color: var(--text-primary);">Your Prompt</h2>
+          <textarea id="prompt" placeholder="Type your prompt here..."></textarea>
         </div>
-        <!-- Metadata div kept for spacing but hidden from users -->
-        <div id="metadata" class="metadata" style="display: none;"></div>
+        
+        <div class="button-group">
+          <button id="submit" class="submit-btn">Submit Prompt</button>
+          <button id="clear" class="clear-btn">Clear</button>
+        </div>
+        
+        <div id="message"></div>
+        
+        <div class="output-section">
+          <h2 style="margin-bottom: 15px; font-size: 18px; font-weight: 700; color: var(--text-primary);">AI Response</h2>
+          <div id="output" class="output-container">
+            <span style="color: var(--text-muted); font-weight: 400;">Waiting for prompt submission...</span>
+          </div>
+          <!-- Metadata div kept for spacing but hidden from users -->
+          <div id="metadata" class="metadata" style="display: none;"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -1224,7 +1340,24 @@
       // Set scenario text (with markdown)
       const scenarioTextEl = document.getElementById('scenarioText');
       if (CONFIG.ENABLE_MARKDOWN && typeof marked !== 'undefined') {
-        scenarioTextEl.innerHTML = marked.parse(scenario.text || '');
+        // Configure marked for GitHub Flavored Markdown (includes tables)
+        marked.setOptions({
+          breaks: true,
+          gfm: true,  // This enables tables!
+          tables: true,
+          sanitize: false,
+          smartLists: true,
+          smartypants: false
+        });
+        
+        try {
+          const parsedHtml = marked.parse(scenario.text || '');
+          scenarioTextEl.innerHTML = parsedHtml;
+          console.log('Markdown with tables rendered');
+        } catch (e) {
+          console.error('Markdown parse error:', e);
+          scenarioTextEl.textContent = scenario.text || '';
+        }
       } else {
         scenarioTextEl.textContent = scenario.text || '';
       }
@@ -1421,17 +1554,30 @@
             CONFIG.AUTO_CLOSE_ON_COMPLETE = serverConfig.autoCloseOnComplete;
             
             // Hide/show AI section based on config
+            console.log('Config received from server:', serverConfig);
+            console.log('AI enabled?', CONFIG.ENABLE_AI);
+            
             const aiSection = document.getElementById('aiSection');
             if (aiSection) {
-              aiSection.style.display = CONFIG.ENABLE_AI ? 'block' : 'none';
-            }
-            
-            // If AI is disabled, also hide the prompt editor section
-            if (!CONFIG.ENABLE_AI) {
-              const promptSection = document.querySelector('.prompt-section');
-              if (promptSection) {
-                promptSection.style.display = 'none';
+              if (CONFIG.ENABLE_AI === false || serverConfig.enableAI === false) {
+                console.log('Hiding AI section - AI is disabled');
+                aiSection.style.display = 'none';
+                
+                // Add a note that AI is disabled
+                const scenarioSection = document.getElementById('scenarioSection');
+                if (scenarioSection && !document.getElementById('aiDisabledNote')) {
+                  const note = document.createElement('div');
+                  note.id = 'aiDisabledNote';
+                  note.style.cssText = 'padding: 15px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; margin: 20px 0; color: var(--text-secondary); text-align: center;';
+                  note.innerHTML = '<strong>AI assistance is disabled for this session.</strong><br>Please focus on the scenario questions above.';
+                  scenarioSection.insertAdjacentElement('afterend', note);
+                }
+              } else {
+                console.log('Showing AI section - AI is enabled');
+                aiSection.style.display = 'block';
               }
+            } else {
+              console.error('AI section element not found! Looking for #aiSection');
             }
           }
           
@@ -1571,12 +1717,15 @@
         // Parse markdown if enabled
         const outputElement = document.getElementById('output');
         if (CONFIG.ENABLE_MARKDOWN && typeof marked !== 'undefined') {
-          // Configure marked options
+          // Configure marked options (enable tables)
           marked.setOptions({
             breaks: true,
-            gfm: true,
+            gfm: true,  // GitHub Flavored Markdown with tables
+            tables: true,
             headerIds: false,
-            mangle: false
+            mangle: false,
+            sanitize: false,
+            smartLists: true
           });
           
           // Parse and display markdown
