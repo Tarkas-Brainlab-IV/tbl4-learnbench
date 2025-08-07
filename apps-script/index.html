@@ -202,6 +202,79 @@
       border-color: var(--button-success);
     }
     
+    /* Scenario Section */
+    .scenario-section {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 25px;
+      margin-bottom: 30px;
+      display: none; /* Hidden by default, shown when scenario loaded */
+    }
+    
+    .scenario-section h2 {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 20px;
+    }
+    
+    .scenario-content {
+      background: var(--bg-primary);
+      padding: 20px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+    
+    .scenario-image {
+      max-width: 100%;
+      height: auto;
+      border-radius: 6px;
+      margin: 15px 0;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .response-options {
+      display: grid;
+      gap: 12px;
+      margin-top: 20px;
+    }
+    
+    .response-option {
+      padding: 15px 20px;
+      background: var(--bg-primary);
+      border: 2px solid var(--border-color);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 15px;
+      text-align: left;
+      color: var(--text-primary);
+    }
+    
+    .response-option:hover {
+      border-color: var(--button-success);
+      background: var(--bg-secondary);
+      transform: translateX(3px);
+    }
+    
+    .response-option.selected {
+      background: var(--button-success);
+      color: white;
+      border-color: var(--button-success);
+    }
+    
+    .response-status {
+      margin-top: 15px;
+      padding: 10px;
+      background: var(--bg-secondary);
+      border-radius: 6px;
+      text-align: center;
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+    
     .editor-container {
       margin-bottom: 20px;
     }
@@ -798,6 +871,17 @@
     <!-- Main Interface (hidden initially) -->
     <div id="mainInterface" style="display: none;">
     
+      <!-- Scenario Section -->
+      <div id="scenarioSection" class="scenario-section">
+        <h2>Scenario</h2>
+        <div class="scenario-content">
+          <div id="scenarioText"></div>
+          <img id="scenarioImage" class="scenario-image" style="display: none;" />
+        </div>
+        <div class="response-options" id="responseOptions"></div>
+        <div class="response-status" id="responseStatus" style="display: none;"></div>
+      </div>
+    
       <div class="editor-container">
         <h2 style="margin-bottom: 15px; font-size: 18px; font-weight: 700; color: var(--text-primary);">Your Prompt</h2>
         <textarea id="prompt" placeholder="Type your prompt here..."></textarea>
@@ -975,6 +1059,8 @@
       sessionData.participantId = result.hash;
       sessionData.startTime = new Date().toISOString();  // Track session start time
       sessionData.totalTokensUsed = 0;  // Initialize token counter
+      sessionData.scenarioId = null;  // Track current scenario
+      sessionData.scenarioResponse = null;  // Track selected response
       
       // Check if demographics were already collected
       const demographicsCollected = localStorage.getItem('demographicsCollected_' + sessionData.participantId);
@@ -1006,12 +1092,83 @@
       alert('Login failed: ' + error);
     }
     
+    function loadScenario() {
+      // Load scenario from backend
+      google.script.run
+        .withSuccessHandler((scenario) => {
+          if (scenario && scenario.id) {
+            sessionData.scenarioId = scenario.id;
+            
+            // Display scenario section
+            document.getElementById('scenarioSection').style.display = 'block';
+            
+            // Set scenario text (with markdown)
+            const scenarioTextEl = document.getElementById('scenarioText');
+            if (CONFIG.ENABLE_MARKDOWN && typeof marked !== 'undefined') {
+              scenarioTextEl.innerHTML = marked.parse(scenario.text || '');
+            } else {
+              scenarioTextEl.textContent = scenario.text || '';
+            }
+            
+            // Set image if provided
+            if (scenario.imageUrl) {
+              const img = document.getElementById('scenarioImage');
+              img.src = scenario.imageUrl;
+              img.style.display = 'block';
+            }
+            
+            // Create response option buttons
+            const optionsContainer = document.getElementById('responseOptions');
+            optionsContainer.innerHTML = '';
+            
+            scenario.options.forEach((option, index) => {
+              const button = document.createElement('button');
+              button.className = 'response-option';
+              button.textContent = option.text;
+              button.dataset.optionId = option.id;
+              button.dataset.score = option.score;
+              
+              button.addEventListener('click', function() {
+                // Remove previous selection
+                document.querySelectorAll('.response-option').forEach(btn => {
+                  btn.classList.remove('selected');
+                });
+                
+                // Mark as selected
+                this.classList.add('selected');
+                
+                // Store selection
+                sessionData.scenarioResponse = {
+                  optionId: option.id,
+                  text: option.text,
+                  score: option.score
+                };
+                
+                // Show status
+                const status = document.getElementById('responseStatus');
+                status.textContent = 'Response selected. You can continue to refine your answer or submit when ready.';
+                status.style.display = 'block';
+              });
+              
+              optionsContainer.appendChild(button);
+            });
+          }
+        })
+        .withFailureHandler((error) => {
+          console.error('Failed to load scenario:', error);
+        })
+        .getScenarioForParticipant(sessionData.participantId);
+    }
+    
     function initializeMainInterface() {
       // Guard against double initialization
       if (editor) {
         console.log('Editor already initialized');
         return;
       }
+      
+      // Load scenario
+      loadScenario();
       
       // Initialize CodeMirror with better defaults
       // Get current theme for CodeMirror
@@ -1072,7 +1229,9 @@
               endTime: endTime,
               durationSeconds: duration,
               totalTokensUsed: sessionData.totalTokensUsed || 0,
-              promptCount: sessionData.promptCount || 0
+              promptCount: sessionData.promptCount || 0,
+              scenarioId: sessionData.scenarioId,
+              scenarioResponse: sessionData.scenarioResponse
             });
         }
       };

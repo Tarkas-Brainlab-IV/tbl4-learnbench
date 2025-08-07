@@ -1032,6 +1032,118 @@ function setAllowOutOfClass(allowed) {
   console.log('Out-of-class submissions:', allowed ? 'ALLOWED' : 'BLOCKED');
 }
 
+// Function to get scenario for a participant
+function getScenarioForParticipant(participantId) {
+  try {
+    const sheet = getOrCreateSheet();
+    const ss = sheet.getParent();
+    
+    // Check for scenarios sheet
+    let scenariosSheet = ss.getSheetByName('Scenarios');
+    
+    if (!scenariosSheet) {
+      // Create example scenarios sheet if it doesn't exist
+      scenariosSheet = createExampleScenariosSheet(ss);
+    }
+    
+    // Get all scenarios
+    const data = scenariosSheet.getDataRange().getValues();
+    const headers = data[0];
+    const scenarios = [];
+    
+    // Parse scenarios from sheet
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i];
+      if (row[0] && row[1]) { // If ScenarioID and ScenarioText exist
+        const scenario = {
+          id: row[0],
+          text: row[1],
+          imageUrl: row[2] || null,
+          options: []
+        };
+        
+        // Parse up to 5 options
+        for (let j = 0; j < 5; j++) {
+          const optionIdx = 3 + (j * 2); // Option1 at index 3, Option2 at 5, etc.
+          const scoreIdx = 4 + (j * 2);  // Score1 at index 4, Score2 at 6, etc.
+          
+          if (row[optionIdx]) {
+            scenario.options.push({
+              id: `option_${j + 1}`,
+              text: row[optionIdx],
+              score: row[scoreIdx] || 0
+            });
+          }
+        }
+        
+        if (scenario.options.length > 0) {
+          scenarios.push(scenario);
+        }
+      }
+    }
+    
+    if (scenarios.length === 0) {
+      return null;
+    }
+    
+    // For now, return first scenario (can be randomized or assigned by participant ID later)
+    // You could use: scenarios[Math.floor(Math.random() * scenarios.length)]
+    // Or assign based on participant ID hash
+    const scenarioIndex = hashCode(participantId) % scenarios.length;
+    return scenarios[Math.abs(scenarioIndex)];
+    
+  } catch (error) {
+    console.error('Error getting scenario:', error);
+    return null;
+  }
+}
+
+// Helper function to create hash from string
+function hashCode(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  return hash;
+}
+
+// Create example scenarios sheet
+function createExampleScenariosSheet(spreadsheet) {
+  const sheet = spreadsheet.insertSheet('Scenarios');
+  
+  // Set headers
+  const headers = [
+    'ScenarioID', 'ScenarioText', 'ImageURL',
+    'Option1', 'Score1', 'Option2', 'Score2', 
+    'Option3', 'Score3', 'Option4', 'Score4',
+    'Option5', 'Score5'
+  ];
+  
+  // Example scenario
+  const exampleScenario = [
+    'S001',
+    '## Emergency Response\n\nYou are the first to arrive at a multi-vehicle accident on a highway. There are:\n- 3 vehicles involved\n- Smoke coming from one engine\n- Multiple people appear injured\n- Traffic is building up\n\nWhat is your **first** priority action?',
+    'https://via.placeholder.com/600x400/333/fff?text=Accident+Scene',
+    'Ensure your own safety and assess the scene', 10,
+    'Immediately start helping injured people', 5,
+    'Call emergency services (995)', 8,
+    'Direct traffic away from the accident', 3,
+    'Take photos for insurance purposes', 0
+  ];
+  
+  // Set data
+  sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  sheet.getRange(2, 1, 1, exampleScenario.length).setValues([exampleScenario]);
+  
+  // Format headers
+  sheet.getRange(1, 1, 1, headers.length).setFontWeight('bold');
+  sheet.setFrozenRows(1);
+  
+  return sheet;
+}
+
 // Function to save session metrics
 function saveSessionMetrics(participantId, metrics) {
   try {
@@ -1043,17 +1155,21 @@ function saveSessionMetrics(participantId, metrics) {
     
     if (!metricsSheet) {
       metricsSheet = ss.insertSheet('Session_Metrics');
-      // Add headers
-      metricsSheet.getRange(1, 1, 1, 7).setValues([[
+      // Add headers with scenario columns
+      metricsSheet.getRange(1, 1, 1, 11).setValues([[
         'Participant ID',
         'Start Time',
         'End Time',
         'Duration (seconds)',
         'Total Tokens Used',
         'Prompt Count',
+        'Scenario ID',
+        'Response Option',
+        'Response Score',
+        'Response Text',
         'Date'
       ]]);
-      metricsSheet.getRange(1, 1, 1, 7).setFontWeight('bold');
+      metricsSheet.getRange(1, 1, 1, 11).setFontWeight('bold');
     }
     
     // Append metrics data
@@ -1064,6 +1180,10 @@ function saveSessionMetrics(participantId, metrics) {
       metrics.durationSeconds,
       metrics.totalTokensUsed,
       metrics.promptCount,
+      metrics.scenarioId || '',
+      metrics.scenarioResponse?.optionId || '',
+      metrics.scenarioResponse?.score || '',
+      metrics.scenarioResponse?.text || '',
       new Date().toISOString()
     ]);
     
