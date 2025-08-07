@@ -777,6 +777,71 @@
       color: #555;
     }
     
+    /* Image upload area styles */
+    .image-upload-area {
+      margin: 15px 0;
+      padding: 20px;
+      border: 2px dashed var(--border-color);
+      border-radius: 8px;
+      background: var(--bg-secondary);
+      text-align: center;
+      transition: all 0.3s;
+      position: relative;
+    }
+    
+    .image-upload-area.dragover {
+      border-color: var(--button-primary);
+      background: rgba(66, 133, 244, 0.1);
+    }
+    
+    .image-upload-area.has-image {
+      border-style: solid;
+      background: var(--bg-primary);
+    }
+    
+    .upload-instructions {
+      color: var(--text-muted);
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+    
+    .image-preview {
+      max-width: 100%;
+      max-height: 300px;
+      margin: 10px auto;
+      display: block;
+      border-radius: 4px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .remove-image-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: var(--button-danger);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      line-height: 1;
+    }
+    
+    .remove-image-btn:hover {
+      background: var(--button-danger-hover);
+    }
+    
+    .image-info {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 5px;
+    }
+    
     /* Markdown formatting improvements */
     #scenarioText h1,
     #scenarioText h2,
@@ -1071,6 +1136,20 @@
         <div class="editor-container">
           <h2 style="margin-bottom: 15px; font-size: 18px; font-weight: 700; color: var(--text-primary);">Your Prompt</h2>
           <textarea id="prompt" placeholder="Type your prompt here..."></textarea>
+        </div>
+        
+        <!-- Image Upload Area -->
+        <div id="imageUploadArea" class="image-upload-area">
+          <div class="upload-instructions">
+            <strong>Add an image (optional)</strong><br>
+            Drag & drop, paste (Ctrl+V), or click to select
+          </div>
+          <input type="file" id="imageInput" accept="image/*" style="display: none;">
+          <div id="imagePreviewContainer" style="display: none;">
+            <button class="remove-image-btn" onclick="removeImage()" title="Remove image">×</button>
+            <img id="imagePreview" class="image-preview" alt="Preview">
+            <div class="image-info" id="imageInfo"></div>
+          </div>
         </div>
         
         <div class="button-group">
@@ -1649,6 +1728,7 @@
         editor.setValue('');
         document.getElementById('output').innerHTML = '<span style="color: var(--text-muted); font-weight: 400;">Waiting for prompt submission...</span>';
         document.getElementById('metadata').innerHTML = '';
+        if (typeof removeImage === 'function') removeImage();  // Clear uploaded image
         clearMessage();
       };
       clearBtn.removeEventListener('click', clearHandler);
@@ -1787,9 +1867,10 @@
           console.log('❌ Not showing modal');
         }
         
-        // Clear the editor for next prompt
+        // Clear the editor and image for next prompt
         setTimeout(() => {
           editor.setValue('');
+          if (typeof removeImage === 'function') removeImage();  // Clear uploaded image
           clearMessage();
         }, 2000);
       } else {
@@ -1915,6 +1996,124 @@
           }, 2000);
         })
         .saveDemographics(demographics);
+    }
+    
+    // Image upload handling functions
+    function initializeImageUpload() {
+      const uploadArea = document.getElementById('imageUploadArea');
+      const imageInput = document.getElementById('imageInput');
+      
+      if (!uploadArea || !imageInput) return;
+      
+      // Click to upload
+      uploadArea.addEventListener('click', (e) => {
+        if (e.target === uploadArea || e.target.parentElement.classList.contains('upload-instructions')) {
+          imageInput.click();
+        }
+      });
+      
+      // File input change
+      imageInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file && file.type.startsWith('image/')) {
+          handleImageFile(file);
+        }
+      });
+      
+      // Drag and drop
+      uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+      });
+      
+      uploadArea.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+      });
+      
+      uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0 && files[0].type.startsWith('image/')) {
+          handleImageFile(files[0]);
+        }
+      });
+      
+      // Paste event
+      document.addEventListener('paste', (e) => {
+        // Only handle paste in AI section
+        const aiSection = document.getElementById('aiSection');
+        if (!aiSection || !aiSection.contains(document.activeElement)) return;
+        
+        const items = e.clipboardData.items;
+        for (let item of items) {
+          if (item.type.startsWith('image/')) {
+            e.preventDefault();
+            const file = item.getAsFile();
+            handleImageFile(file);
+            break;
+          }
+        }
+      });
+      
+      // Make scenario images draggable
+      const scenarioImage = document.getElementById('scenarioImage');
+      if (scenarioImage) {
+        scenarioImage.draggable = true;
+      }
+    }
+    
+    function handleImageFile(file) {
+      if (file.size > 4 * 1024 * 1024) { // 4MB limit
+        showMessage('Image size must be less than 4MB', 'error');
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const base64 = e.target.result.split(',')[1]; // Remove data:image/...;base64, prefix
+        uploadedImage = {
+          data: base64,
+          mimeType: file.type,
+          name: file.name,
+          size: file.size
+        };
+        displayImagePreview(e.target.result, file.name, file.size);
+      };
+      reader.readAsDataURL(file);
+    }
+    
+    function displayImagePreview(src, name, size) {
+      const uploadArea = document.getElementById('imageUploadArea');
+      const previewContainer = document.getElementById('imagePreviewContainer');
+      const preview = document.getElementById('imagePreview');
+      const info = document.getElementById('imageInfo');
+      const instructions = uploadArea.querySelector('.upload-instructions');
+      
+      if (!preview || !previewContainer) return;
+      
+      preview.src = src;
+      info.textContent = size > 0 ? `${name} (${(size / 1024).toFixed(1)} KB)` : name;
+      
+      instructions.style.display = 'none';
+      previewContainer.style.display = 'block';
+      uploadArea.classList.add('has-image');
+    }
+    
+    function removeImage() {
+      uploadedImage = null;
+      
+      const uploadArea = document.getElementById('imageUploadArea');
+      const previewContainer = document.getElementById('imagePreviewContainer');
+      const instructions = uploadArea.querySelector('.upload-instructions');
+      const imageInput = document.getElementById('imageInput');
+      
+      if (previewContainer) previewContainer.style.display = 'none';
+      if (instructions) instructions.style.display = 'block';
+      if (uploadArea) uploadArea.classList.remove('has-image');
+      if (imageInput) imageInput.value = '';
     }
   </script>
 </body>

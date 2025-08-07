@@ -507,9 +507,9 @@ function getConversationContext(participantId) {
   return conversationCache[participantId];
 }
 
-// Process prompt and get AI response
+// Process prompt and get AI response (with optional image)
 function processPrompt(data) {
-  console.log('Processing prompt:', data);
+  console.log('Processing prompt:', data.image ? 'with image' : 'text only');
   
   try {
     // Detect cohort based on clustering and participant history
@@ -533,8 +533,8 @@ function processPrompt(data) {
     // Get conversation context if enabled
     const context = getConversationContext(data.participantId);
     
-    // Call Gemini API with or without context
-    const geminiResponse = callGeminiAPIWithContext(data.prompt, context);
+    // Call Gemini API with or without context, include image if present
+    const geminiResponse = callGeminiAPIWithContext(data.prompt, context, data.image);
     
     // Update cache if context is enabled
     if (config.enableContext) {
@@ -689,8 +689,8 @@ function getOrCreateSheet() {
   return sheet;
 }
 
-// Call Gemini API with context support
-function callGeminiAPIWithContext(prompt, context = []) {
+// Call Gemini API with context support and optional image
+function callGeminiAPIWithContext(prompt, context = [], image = null) {
   const config = getConfig();
   
   // Build the prompt with context if enabled
@@ -707,16 +707,16 @@ function callGeminiAPIWithContext(prompt, context = []) {
       }
     ]);
     
-    // Use multi-turn conversation format
-    return callGeminiAPIMultiTurn(prompt, contextMessages);
+    // Use multi-turn conversation format with image if provided
+    return callGeminiAPIMultiTurn(prompt, contextMessages, image);
   }
   
-  // Otherwise use single-turn
-  return callGeminiAPI(prompt);
+  // Otherwise use single-turn with image if provided
+  return callGeminiAPI(prompt, image);
 }
 
-// Multi-turn conversation with Gemini
-function callGeminiAPIMultiTurn(currentPrompt, previousMessages) {
+// Multi-turn conversation with Gemini (with optional image)
+function callGeminiAPIMultiTurn(currentPrompt, previousMessages, image = null) {
   const startTime = Date.now();
   
   // Get API key from script properties
@@ -733,12 +733,44 @@ function callGeminiAPIMultiTurn(currentPrompt, previousMessages) {
   
   let currentModelIndex = 0;
   
+  // Build current message parts with text and optional image
+  const currentParts = [{ text: currentPrompt }];
+  
+  if (image) {
+    if (image.data) {
+      // Base64 encoded image
+      currentParts.push({
+        inline_data: {
+          mime_type: image.mimeType || 'image/jpeg',
+          data: image.data
+        }
+      });
+    } else if (image.url) {
+      // For URLs, we need to fetch and encode the image
+      try {
+        const imageResponse = UrlFetchApp.fetch(image.url);
+        const blob = imageResponse.getBlob();
+        const base64 = Utilities.base64Encode(blob.getBytes());
+        currentParts.push({
+          inline_data: {
+            mime_type: blob.getContentType() || 'image/jpeg',
+            data: base64
+          }
+        });
+      } catch (e) {
+        console.error('Failed to fetch image from URL:', e);
+        // Continue without the image
+      }
+    }
+    console.log('Image included in multi-turn request');
+  }
+  
   // Build conversation history
   const contents = [
     ...previousMessages,
     {
       role: 'user',
-      parts: [{ text: currentPrompt }]
+      parts: currentParts
     }
   ];
   
@@ -835,11 +867,41 @@ function callGeminiAPI(prompt) {
   
   let currentModelIndex = 0;
   
+  // Build parts array with text and optional image
+  const parts = [{ text: prompt }];
+  
+  if (image) {
+    if (image.data) {
+      // Base64 encoded image
+      parts.push({
+        inline_data: {
+          mime_type: image.mimeType || 'image/jpeg',
+          data: image.data
+        }
+      });
+    } else if (image.url) {
+      // For URLs, we need to fetch and encode the image
+      try {
+        const imageResponse = UrlFetchApp.fetch(image.url);
+        const blob = imageResponse.getBlob();
+        const base64 = Utilities.base64Encode(blob.getBytes());
+        parts.push({
+          inline_data: {
+            mime_type: blob.getContentType() || 'image/jpeg',
+            data: base64
+          }
+        });
+      } catch (e) {
+        console.error('Failed to fetch image from URL:', e);
+        // Continue without the image
+      }
+    }
+    console.log('Image included in request:', image.mimeType || 'from URL');
+  }
+  
   const requestBody = {
     contents: [{
-      parts: [{
-        text: prompt
-      }]
+      parts: parts
     }],
     generationConfig: {
       temperature: 0.7,
