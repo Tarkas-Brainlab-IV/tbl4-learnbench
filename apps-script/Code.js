@@ -1032,6 +1032,47 @@ function setAllowOutOfClass(allowed) {
   console.log('Out-of-class submissions:', allowed ? 'ALLOWED' : 'BLOCKED');
 }
 
+// Function to save scenario response
+function saveScenarioResponse(participantId, scenarioId, response) {
+  try {
+    const sheet = getOrCreateSheet();
+    const ss = sheet.getParent();
+    
+    // Find or create scenario responses sheet
+    let responsesSheet = ss.getSheetByName('Scenario_Responses');
+    
+    if (!responsesSheet) {
+      responsesSheet = ss.insertSheet('Scenario_Responses');
+      // Add headers
+      responsesSheet.getRange(1, 1, 1, 6).setValues([[
+        'Participant ID',
+        'Scenario ID',
+        'Option Selected',
+        'Response Text',
+        'Score',
+        'Timestamp'
+      ]]);
+      responsesSheet.getRange(1, 1, 1, 6).setFontWeight('bold');
+    }
+    
+    // Append response
+    responsesSheet.appendRow([
+      participantId,
+      scenarioId,
+      response.optionId,
+      response.text,
+      response.score,
+      new Date().toISOString()
+    ]);
+    
+    console.log('Scenario response saved for participant:', participantId);
+    return { success: true };
+  } catch (error) {
+    console.error('Error saving scenario response:', error);
+    return { success: false, error: error.toString() };
+  }
+}
+
 // Function to get scenario for a participant
 function getScenarioForParticipant(participantId) {
   try {

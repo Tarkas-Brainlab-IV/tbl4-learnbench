@@ -219,26 +219,59 @@
       margin-bottom: 20px;
     }
     
+    .scenario-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 25px;
+      margin-bottom: 25px;
+    }
+    
+    @media (max-width: 768px) {
+      .scenario-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+    
     .scenario-content {
       background: var(--bg-primary);
       padding: 20px;
       border-radius: 6px;
-      margin-bottom: 20px;
       line-height: 1.6;
+    }
+    
+    .scenario-image-container {
+      background: var(--bg-primary);
+      padding: 20px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 300px;
     }
     
     .scenario-image {
       max-width: 100%;
       height: auto;
       border-radius: 6px;
-      margin: 15px 0;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .scenario-image.placeholder {
+      width: 100%;
+      height: 300px;
+      background: var(--bg-secondary);
+      border: 2px dashed var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      font-size: 14px;
     }
     
     .response-options {
       display: grid;
       gap: 12px;
-      margin-top: 20px;
+      margin-bottom: 20px;
     }
     
     .response-option {
@@ -265,12 +298,40 @@
       border-color: var(--button-success);
     }
     
-    .response-status {
-      margin-top: 15px;
-      padding: 10px;
-      background: var(--bg-secondary);
+    .response-controls {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+    }
+    
+    .submit-response-btn {
+      padding: 12px 30px;
+      background: var(--button-success);
+      color: white;
+      border: none;
       border-radius: 6px;
-      text-align: center;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .submit-response-btn:hover:not(:disabled) {
+      background: var(--button-success-hover);
+      transform: translateY(-1px);
+    }
+    
+    .submit-response-btn:disabled {
+      background: var(--border-color);
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+    
+    .response-status {
+      flex: 1;
+      padding: 10px;
+      background: var(--bg-primary);
+      border-radius: 6px;
       color: var(--text-secondary);
       font-size: 14px;
     }
@@ -874,12 +935,22 @@
       <!-- Scenario Section -->
       <div id="scenarioSection" class="scenario-section">
         <h2>Scenario</h2>
-        <div class="scenario-content">
-          <div id="scenarioText"></div>
-          <img id="scenarioImage" class="scenario-image" style="display: none;" />
+        <div class="scenario-layout">
+          <div class="scenario-content">
+            <div id="scenarioText"></div>
+          </div>
+          <div class="scenario-image-container">
+            <img id="scenarioImage" class="scenario-image" style="display: none;" />
+            <div id="imagePlaceholder" class="scenario-image placeholder" style="display: none;">
+              No image available
+            </div>
+          </div>
         </div>
         <div class="response-options" id="responseOptions"></div>
-        <div class="response-status" id="responseStatus" style="display: none;"></div>
+        <div class="response-controls">
+          <button id="submitResponse" class="submit-response-btn" disabled>Submit Response</button>
+          <div class="response-status" id="responseStatus" style="display: none;"></div>
+        </div>
       </div>
     
       <div class="editor-container">
@@ -1110,11 +1181,23 @@
               scenarioTextEl.textContent = scenario.text || '';
             }
             
-            // Set image if provided
-            if (scenario.imageUrl) {
-              const img = document.getElementById('scenarioImage');
+            // Set image or show placeholder
+            const img = document.getElementById('scenarioImage');
+            const placeholder = document.getElementById('imagePlaceholder');
+            
+            if (scenario.imageUrl && scenario.imageUrl !== '') {
               img.src = scenario.imageUrl;
               img.style.display = 'block';
+              placeholder.style.display = 'none';
+              
+              // Handle image load error
+              img.onerror = function() {
+                img.style.display = 'none';
+                placeholder.style.display = 'flex';
+              };
+            } else {
+              img.style.display = 'none';
+              placeholder.style.display = 'flex';
             }
             
             // Create response option buttons
@@ -1144,13 +1227,42 @@
                   score: option.score
                 };
                 
+                // Enable submit button
+                document.getElementById('submitResponse').disabled = false;
+                
                 // Show status
                 const status = document.getElementById('responseStatus');
-                status.textContent = 'Response selected. You can continue to refine your answer or submit when ready.';
+                status.textContent = 'Response selected. You can continue to explore with AI or submit when ready.';
                 status.style.display = 'block';
               });
               
               optionsContainer.appendChild(button);
+            });
+            
+            // Add submit response handler
+            document.getElementById('submitResponse').addEventListener('click', function() {
+              if (sessionData.scenarioResponse) {
+                // Save response
+                google.script.run
+                  .withSuccessHandler(() => {
+                    // Disable further changes
+                    document.querySelectorAll('.response-option').forEach(btn => {
+                      btn.disabled = true;
+                      btn.style.cursor = 'not-allowed';
+                    });
+                    this.disabled = true;
+                    this.textContent = 'Response Submitted';
+                    
+                    // Update status
+                    const status = document.getElementById('responseStatus');
+                    status.textContent = `Response submitted: "${sessionData.scenarioResponse.text}"`;
+                    status.style.color = 'var(--button-success)';
+                  })
+                  .withFailureHandler((error) => {
+                    console.error('Failed to save response:', error);
+                  })
+                  .saveScenarioResponse(sessionData.participantId, sessionData.scenarioId, sessionData.scenarioResponse);
+              }
             });
           }
         })
