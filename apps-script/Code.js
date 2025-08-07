@@ -161,7 +161,53 @@ function createSetupSheet(spreadsheet) {
   sheet.getRange('B2:B5').setDataValidation(booleanRule);
   sheet.getRange('B7:B9').setDataValidation(booleanRule);
   
+  console.log('✅ Setup sheet created with default values');
+  console.log('Configure settings in column B (checkboxes for true/false, numbers for numeric values)');
+  
   return sheet;
+}
+
+// Function to ensure Setup sheet exists and is properly configured
+function ensureSetupSheet() {
+  try {
+    const sheet = getOrCreateSheet();
+    const ss = sheet.getParent();
+    let setupSheet = ss.getSheetByName('Setup');
+    
+    if (!setupSheet) {
+      console.log('Setup sheet not found, creating...');
+      setupSheet = createSetupSheet(ss);
+      console.log('✅ Setup sheet created successfully');
+      console.log('URL:', ss.getUrl() + '#gid=' + setupSheet.getSheetId());
+    } else {
+      console.log('✅ Setup sheet already exists');
+    }
+    
+    // Display current configuration
+    const config = getConfig();
+    console.log('\n📋 Current Configuration:');
+    console.log('- Enable AI Assistance:', config.enableAI);
+    console.log('- Enable Context:', config.enableContext);
+    console.log('- Context Window:', config.contextWindow);
+    console.log('- Enable Demographics:', config.enableDemographics);
+    console.log('- Prompts Before Demographics:', config.promptsBeforeDemographics);
+    console.log('- Auto-advance Scenarios:', config.autoAdvanceScenarios);
+    console.log('- Auto-close on Complete:', config.autoCloseOnComplete);
+    console.log('- Allow Out of Class:', config.allowOutOfClass);
+    console.log('- Timezone:', config.timezone);
+    
+    console.log('\n📝 To change settings:');
+    console.log('1. Open the Setup sheet in your Google Spreadsheet');
+    console.log('2. Modify values in column B');
+    console.log('3. Use checkboxes for true/false values');
+    console.log('4. Enter numbers directly for numeric values');
+    console.log('5. Changes take effect on next page reload');
+    
+    return setupSheet;
+  } catch (error) {
+    console.error('Error ensuring setup sheet:', error);
+    throw error;
+  }
 }
 
 // Get demographics configuration
@@ -1183,6 +1229,8 @@ function getAllScenariosForParticipant(participantId) {
     const headers = data[0];
     const scenarios = [];
     
+    console.log(`Found ${data.length - 1} rows in Scenarios sheet`);
+    
     // Parse scenarios from sheet
     for (let i = 1; i < data.length; i++) {
       const row = data[i];
@@ -1210,15 +1258,75 @@ function getAllScenariosForParticipant(participantId) {
         
         if (scenario.options.length > 0) {
           scenarios.push(scenario);
+          console.log(`Added scenario: ${scenario.id} with ${scenario.options.length} options`);
         }
       }
     }
     
+    console.log(`Returning ${scenarios.length} scenarios to client`);
     return scenarios; // Return ALL scenarios
     
   } catch (error) {
     console.error('Error getting scenarios:', error);
     return [];
+  }
+}
+
+// Function to test the scenario system
+function testScenarioSystem() {
+  console.log('\n=== Testing Scenario System ===\n');
+  
+  try {
+    // Test loading scenarios
+    const scenarios = getAllScenariosForParticipant('TEST_USER');
+    
+    console.log(`✅ Loaded ${scenarios.length} scenarios`);
+    
+    if (scenarios.length === 0) {
+      console.log('⚠️ No scenarios found. Make sure you have scenarios in the Scenarios sheet.');
+      console.log('Expected format:');
+      console.log('- Column A: ScenarioID (e.g., S001)');
+      console.log('- Column B: ScenarioText (can use markdown)');
+      console.log('- Column C: ImageURL (optional)');
+      console.log('- Column D: Option1');
+      console.log('- Column E: Score1');
+      console.log('- Column F: Option2');
+      console.log('- Column G: Score2');
+      console.log('... and so on for up to 5 options');
+    } else {
+      scenarios.forEach((scenario, index) => {
+        console.log(`\nScenario ${index + 1}: ${scenario.id}`);
+        console.log(`Text: ${scenario.text.substring(0, 50)}...`);
+        console.log(`Options: ${scenario.options.length}`);
+        scenario.options.forEach(opt => {
+          console.log(`  - ${opt.text} (score: ${opt.score})`);
+        });
+      });
+    }
+    
+    // Test configuration
+    console.log('\n=== Testing Configuration ===\n');
+    const config = getConfig();
+    console.log('Configuration loaded:', config);
+    
+    if (!config.autoAdvanceScenarios) {
+      console.log('⚠️ Auto-advance is DISABLED. Users will need to manually click to continue.');
+    } else {
+      console.log('✅ Auto-advance is ENABLED. Scenarios will advance automatically.');
+    }
+    
+    return {
+      scenarios: scenarios.length,
+      config: config,
+      success: true
+    };
+    
+  } catch (error) {
+    console.error('Test failed:', error);
+    return {
+      success: false,
+      error: error.toString()
+    };
   }
 }
 

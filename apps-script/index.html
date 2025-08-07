@@ -1171,12 +1171,15 @@
     }
     
     function loadAllScenarios() {
+      console.log('Loading all scenarios...');
       // Load ALL scenarios from backend
       google.script.run
         .withSuccessHandler((scenarios) => {
+          console.log('Scenarios received:', scenarios);
           if (scenarios && scenarios.length > 0) {
             allScenarios = scenarios;
             currentScenarioIndex = 0;
+            console.log(`Loaded ${scenarios.length} scenarios`);
             displayCurrentScenario();
           } else {
             console.log('No scenarios available');
@@ -1190,13 +1193,17 @@
     }
     
     function displayCurrentScenario() {
+      console.log(`Displaying scenario ${currentScenarioIndex + 1} of ${allScenarios.length}`);
+      
       if (currentScenarioIndex >= allScenarios.length) {
+        console.log('All scenarios completed - ending session');
         // All scenarios completed - auto-end session
         endSession();
         return;
       }
       
       const scenario = allScenarios[currentScenarioIndex];
+      console.log('Current scenario:', scenario);
       sessionData.scenarioId = scenario.id;
       sessionData.scenarioResponse = null; // Reset response for new scenario
       
@@ -1308,13 +1315,20 @@
               status.textContent = `Response submitted: "${sessionData.scenarioResponse.text}"`;
               status.style.color = 'var(--button-success)';
               
+              console.log('Response saved successfully');
+              console.log('Auto-advance enabled?', CONFIG.AUTO_ADVANCE_SCENARIOS);
+              console.log('Current index:', currentScenarioIndex, 'Total scenarios:', allScenarios.length);
+              
               // Auto-advance to next scenario if configured
-              if (CONFIG.AUTO_ADVANCE_SCENARIOS) {
+              if (CONFIG.AUTO_ADVANCE_SCENARIOS !== false) {
+                console.log('Auto-advancing to next scenario in 2 seconds...');
                 setTimeout(() => {
                   currentScenarioIndex++;
+                  console.log('Advancing to scenario index:', currentScenarioIndex);
                   displayCurrentScenario();
                 }, 2000);
               } else {
+                console.log('Auto-advance disabled, showing manual continue button');
                 // Show manual continue button
                 const status = document.getElementById('responseStatus');
                 status.innerHTML = `Response submitted: "${sessionData.scenarioResponse.text}"<br>
