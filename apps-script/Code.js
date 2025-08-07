@@ -850,7 +850,7 @@ function callGeminiAPIMultiTurn(currentPrompt, previousMessages, image = null) {
 }
 
 // Call Gemini API - PRODUCTION VERSION (single-turn)
-function callGeminiAPI(prompt) {
+function callGeminiAPI(prompt, image = null) {
   const startTime = Date.now();
   
   // Get API key from script properties

@@ -1696,6 +1696,9 @@
       // Load all scenarios
       loadAllScenarios();
       
+      // Initialize image upload functionality
+      initializeImageUpload();
+      
       // Initialize CodeMirror with better defaults
       // Get current theme for CodeMirror
       const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
@@ -1794,15 +1797,23 @@
       document.getElementById('metadata').innerHTML = '';
       clearMessage();
       
+      // Prepare prompt data with optional image
+      const promptData = {
+        participantId: sessionData.participantId,
+        cohortId: sessionData.cohortId,
+        prompt: prompt
+      };
+      
+      // Add image if uploaded
+      if (window.uploadedImage) {
+        promptData.image = window.uploadedImage;
+      }
+      
       // Call server function
       google.script.run
         .withSuccessHandler(handleSuccess)
         .withFailureHandler(handleError)
-        .processPrompt({
-          participantId: sessionData.participantId,
-          cohortId: sessionData.cohortId,
-          prompt: prompt
-        });
+        .processPrompt(promptData);
     }
     
     function handleSuccess(response) {
@@ -2005,9 +2016,20 @@
       
       if (!uploadArea || !imageInput) return;
       
+      // Prevent default drag behavior on the whole document
+      document.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      });
+      
+      document.addEventListener('drop', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      });
+      
       // Click to upload
       uploadArea.addEventListener('click', (e) => {
-        if (e.target === uploadArea || e.target.parentElement.classList.contains('upload-instructions')) {
+        if (e.target === uploadArea || e.target.parentElement?.classList?.contains('upload-instructions')) {
           imageInput.click();
         }
       });
@@ -2020,19 +2042,22 @@
         }
       });
       
-      // Drag and drop
+      // Drag and drop on upload area
       uploadArea.addEventListener('dragover', (e) => {
         e.preventDefault();
+        e.stopPropagation();
         uploadArea.classList.add('dragover');
       });
       
       uploadArea.addEventListener('dragleave', (e) => {
         e.preventDefault();
+        e.stopPropagation();
         uploadArea.classList.remove('dragover');
       });
       
       uploadArea.addEventListener('drop', (e) => {
         e.preventDefault();
+        e.stopPropagation();
         uploadArea.classList.remove('dragover');
         
         const files = e.dataTransfer.files;
@@ -2041,18 +2066,28 @@
         }
       });
       
-      // Paste event
+      // Paste event - handle paste anywhere on the page
       document.addEventListener('paste', (e) => {
-        // Only handle paste in AI section
-        const aiSection = document.getElementById('aiSection');
-        if (!aiSection || !aiSection.contains(document.activeElement)) return;
+        // Check if we're in a text input/textarea (but not CodeMirror)
+        const activeElement = document.activeElement;
+        const isTextInput = activeElement && (
+          activeElement.tagName === 'INPUT' || 
+          activeElement.tagName === 'TEXTAREA'
+        );
         
-        const items = e.clipboardData.items;
+        // Don't interfere with text paste operations
+        if (isTextInput) return;
+        
+        const items = e.clipboardData?.items;
+        if (!items) return;
+        
         for (let item of items) {
           if (item.type.startsWith('image/')) {
             e.preventDefault();
             const file = item.getAsFile();
-            handleImageFile(file);
+            if (file) {
+              handleImageFile(file);
+            }
             break;
           }
         }
@@ -2074,7 +2109,7 @@
       const reader = new FileReader();
       reader.onload = (e) => {
         const base64 = e.target.result.split(',')[1]; // Remove data:image/...;base64, prefix
-        uploadedImage = {
+        window.uploadedImage = {
           data: base64,
           mimeType: file.type,
           name: file.name,
@@ -2103,7 +2138,7 @@
     }
     
     function removeImage() {
-      uploadedImage = null;
+      window.uploadedImage = null;
       
       const uploadArea = document.getElementById('imageUploadArea');
       const previewContainer = document.getElementById('imagePreviewContainer');
@@ -2115,6 +2150,9 @@
       if (uploadArea) uploadArea.classList.remove('has-image');
       if (imageInput) imageInput.value = '';
     }
+    
+    // Make removeImage globally accessible
+    window.removeImage = removeImage;
   </script>
 </body>
 </html>
