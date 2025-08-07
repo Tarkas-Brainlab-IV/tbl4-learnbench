@@ -5,11 +5,12 @@ A web-based system for conducting human-AI teaming prompting experiments using G
 ## Overview
 
 NERV LearnBench provides a streamlined platform for:
-- Collecting prompts from experiment participants
-- Processing prompts through AI models (Gemini)
+- Collecting text and image-based prompts from experiment participants
+- Processing multimodal prompts through AI models (Gemini 1.5)
 - Logging all interactions to Google Sheets
 - Real-time display of AI responses
 - CodeMirror-based prompt editor with syntax highlighting
+- Scenario-based experiments with configurable workflows
 
 ## Architecture
 
@@ -122,19 +123,30 @@ On first deployment, you'll need to:
 ### For Participants
 
 1. Open the provided URL
-2. Enter participant ID and select cohort
-3. Write prompts in the CodeMirror editor
-4. Submit to see AI responses
-5. All interactions are automatically logged
+2. Enter participant ID (last 4 characters of NRIC)
+3. Complete optional demographics survey
+4. Review scenario and respond to questions
+5. Write prompts in the CodeMirror editor
+6. Optionally attach images by:
+   - Dragging and dropping onto the attachment area
+   - Pasting from clipboard (Ctrl/Cmd+V)
+   - Clicking to browse and select files
+7. Submit prompts to receive AI responses
+8. All interactions are automatically logged
 
 ## Features
 
 - **Rich Text Editor**: CodeMirror with line numbers and syntax highlighting
-- **Real-time Processing**: Immediate AI responses
+- **Multimodal AI Support**: Submit text prompts with optional images
+- **Image Upload Options**: 
+  - Drag and drop images onto the upload area
+  - Paste images from clipboard (Ctrl/Cmd+V)
+  - Click to select images via file dialog
+- **Real-time Processing**: Immediate AI responses from Gemini
 - **Automatic Logging**: All prompts and responses saved to Google Sheets
 - **Participant Tracking**: ID and cohort-based organization
 - **Response Metadata**: Timestamps, token counts, processing time
-- **Keyboard Shortcuts**: Ctrl+Enter to submit
+- **Keyboard Shortcuts**: Ctrl+Enter to submit prompt
 
 ## Data Structure
 
@@ -148,22 +160,41 @@ The Google Sheet logs the following columns:
 - Token Count
 - Processing Time (ms)
 
+## Configuration
+
+### Setup Sheet
+The system creates a "Setup" sheet in your Google Sheets with configurable parameters:
+- **Enable AI**: Toggle AI responses on/off
+- **Enable Context**: Maintain conversation context across prompts
+- **Context Window**: Number of previous messages to include (default: 5)
+- **Enable Demographics**: Show/hide demographics survey
+- **Prompts Before Demographics**: When to show the survey (default: after 1 prompt)
+- **Auto Advance Scenarios**: Automatically move to next scenario
+- **Auto Close on Complete**: End session when all scenarios are done
+
+### Image Support
+The system supports multimodal prompts with Gemini 1.5:
+- **Max file size**: 4MB per image
+- **Supported formats**: JPEG, PNG, GIF, WebP
+- **Multiple upload methods**: Drag & drop, paste, or file selection
+- Images are base64 encoded and sent with the prompt to Gemini
+
 ## Customization
 
-### Adding New Cohorts
-Edit the cohort dropdown in `index.html`:
-```html
-<option value="cohort-d">Cohort D</option>
-```
+### Adding Scenarios
+Edit the scenarios in the Setup sheet or modify `getAllScenariosForParticipant()` in Code.js
 
 ### Changing AI Models
-Modify the `callGeminiAPI` function to use different models or providers (OpenAI, Anthropic, local models).
+The system automatically tries Gemini 1.5 Flash first, then falls back to Gemini Pro if needed. To modify:
+```javascript
+const models = [
+  { name: 'gemini-1.5-flash', url: '...' },
+  { name: 'gemini-pro', url: '...' }
+];
+```
 
 ### UI Themes
-Update the CodeMirror theme in `index.html`:
-```javascript
-theme: 'monokai', // Change to 'default', 'dracula', etc.
-```
+The interface supports light, dark, and system themes. Users can switch using the theme buttons in the header.
 
 ## Security Considerations
 
