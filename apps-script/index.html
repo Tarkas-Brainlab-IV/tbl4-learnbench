@@ -779,14 +779,17 @@
     
     /* Image upload area styles */
     .image-upload-area {
-      margin: 15px 0;
-      padding: 20px;
-      border: 2px dashed var(--border-color);
-      border-radius: 8px;
+      margin-top: 8px;
+      margin-bottom: 0;
+      padding: 10px;
+      border: 1px dashed var(--border-color);
+      border-radius: 6px;
       background: var(--bg-secondary);
       text-align: center;
       transition: all 0.3s;
       position: relative;
+      cursor: pointer;
+      font-size: 13px;
     }
     
     .image-upload-area.dragover {
@@ -797,34 +800,44 @@
     .image-upload-area.has-image {
       border-style: solid;
       background: var(--bg-primary);
+      padding: 10px;
     }
     
     .upload-instructions {
       color: var(--text-muted);
-      font-size: 14px;
-      margin-bottom: 10px;
+      font-size: 13px;
+      line-height: 1.4;
     }
     
     .image-preview {
-      max-width: 100%;
-      max-height: 300px;
+      max-width: 200px;
+      max-height: 150px;
       margin: 10px auto;
       display: block;
       border-radius: 4px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      border: 2px solid var(--border-color);
+    }
+    
+    #imagePreviewContainer {
+      position: relative;
+      display: inline-block;
     }
     
     .remove-image-btn {
       position: absolute;
-      top: 10px;
-      right: 10px;
+      top: -10px;
+      right: -10px;
       background: var(--button-danger);
       color: white;
       border: none;
       border-radius: 50%;
-      width: 30px;
-      height: 30px;
+      width: 25px;
+      height: 25px;
       cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+      z-index: 10;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -1136,19 +1149,18 @@
         <div class="editor-container">
           <h2 style="margin-bottom: 15px; font-size: 18px; font-weight: 700; color: var(--text-primary);">Your Prompt</h2>
           <textarea id="prompt" placeholder="Type your prompt here..."></textarea>
-        </div>
-        
-        <!-- Image Upload Area -->
-        <div id="imageUploadArea" class="image-upload-area">
-          <div class="upload-instructions">
-            <strong>Add an image (optional)</strong><br>
-            Drag & drop, paste (Ctrl+V), or click to select
-          </div>
-          <input type="file" id="imageInput" accept="image/*" style="display: none;">
-          <div id="imagePreviewContainer" style="display: none;">
-            <button class="remove-image-btn" onclick="removeImage()" title="Remove image">×</button>
-            <img id="imagePreview" class="image-preview" alt="Preview">
-            <div class="image-info" id="imageInfo"></div>
+          
+          <!-- Image Upload Area (inline with prompt) -->
+          <div id="imageUploadArea" class="image-upload-area">
+            <div class="upload-instructions">
+              📎 <strong>Attach image</strong> - Drag, paste, or click
+            </div>
+            <input type="file" id="imageInput" accept="image/*" style="display: none;">
+            <div id="imagePreviewContainer" style="display: none;">
+              <button class="remove-image-btn" onclick="removeImage()" title="Remove image">×</button>
+              <img id="imagePreview" class="image-preview" alt="Attached image">
+              <div class="image-info" id="imageInfo" style="font-size: 11px; color: var(--text-muted); margin-top: 3px;"></div>
+            </div>
           </div>
         </div>
         
