@@ -43,7 +43,14 @@ function generateParticipantHash(nricLast4) {
     
     // Convert to hex and take first 8 characters for a shorter ID
     const hexHash = hash.map(byte => ('0' + (byte & 0xFF).toString(16)).slice(-2)).join('');
-    const shortHash = hexHash.substr(0, 8).toUpperCase();
+    let shortHash = hexHash.substr(0, 8).toUpperCase();
+    
+    // Ensure hash starts with a letter to prevent scientific notation in spreadsheets
+    // If it starts with all numbers and could be interpreted as scientific notation,
+    // prepend 'P' for participant
+    if (/^\d+E\d+$/i.test(shortHash) || /^\d{8}$/.test(shortHash)) {
+      shortHash = 'P' + shortHash.substr(0, 7);
+    }
     
     console.log('Generated hash for NRIC ending:', normalizedNric, '→', shortHash);
     
@@ -1169,7 +1176,7 @@ function setAllowOutOfClass(allowed) {
   console.log('Out-of-class submissions:', allowed ? 'ALLOWED' : 'BLOCKED');
 }
 
-// Function to save scenario response
+// Function to save scenario response with duplicate prevention
 function saveScenarioResponse(participantId, scenarioId, response) {
   try {
     const sheet = getOrCreateSheet();
@@ -1180,30 +1187,54 @@ function saveScenarioResponse(participantId, scenarioId, response) {
     
     if (!responsesSheet) {
       responsesSheet = ss.insertSheet('Scenario_Responses');
-      // Add headers
-      responsesSheet.getRange(1, 1, 1, 6).setValues([[
+      // Add headers with submission ID
+      responsesSheet.getRange(1, 1, 1, 7).setValues([[
         'Participant ID',
         'Scenario ID',
         'Option Selected',
         'Response Text',
         'Score',
-        'Timestamp'
+        'Timestamp',
+        'Submission ID'
       ]]);
-      responsesSheet.getRange(1, 1, 1, 6).setFontWeight('bold');
+      responsesSheet.getRange(1, 1, 1, 7).setFontWeight('bold');
     }
     
-    // Append response
+    // Check for recent duplicate (within last 5 seconds)
+    const data = responsesSheet.getDataRange().getValues();
+    const now = new Date();
+    
+    // Check last 10 rows for duplicates
+    for (let i = Math.max(1, data.length - 10); i < data.length; i++) {
+      if (i >= data.length) break;
+      const row = data[i];
+      if (row[0] === participantId && row[1] === scenarioId) {
+        const rowTimestamp = new Date(row[5]);
+        const timeDiff = (now - rowTimestamp) / 1000; // seconds
+        
+        if (timeDiff < 5) {
+          console.log('Duplicate submission detected within 5 seconds, ignoring');
+          return { success: true, duplicate: true };
+        }
+      }
+    }
+    
+    // Generate unique submission ID
+    const submissionId = Utilities.getUuid();
+    
+    // Append response with submission ID, force participant ID as string
     responsesSheet.appendRow([
-      participantId,
+      String(participantId), // Force string to prevent scientific notation
       scenarioId,
       response.optionId,
       response.text,
       response.score,
-      new Date().toISOString()
+      new Date().toISOString(),
+      submissionId
     ]);
     
-    console.log('Scenario response saved for participant:', participantId);
-    return { success: true };
+    console.log('Scenario response saved:', participantId, 'Scenario:', scenarioId, 'ID:', submissionId);
+    return { success: true, submissionId: submissionId };
   } catch (error) {
     console.error('Error saving scenario response:', error);
     return { success: false, error: error.toString() };

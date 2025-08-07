@@ -1103,6 +1103,7 @@
     let editor = null;  // Explicitly initialize as null to prevent duplicates
     let allScenarios = [];  // Store all scenarios
     let currentScenarioIndex = 0;  // Track current scenario
+    let submittedScenarios = new Set();  // Track which scenarios have been submitted
     let sessionData = {
       participantId: null,
       cohortId: 'default',
@@ -1323,6 +1324,14 @@
       sessionData.scenarioId = scenario.id;
       sessionData.scenarioResponse = null; // Reset response for new scenario
       
+      // Check if this scenario was already submitted (in case of refresh)
+      if (submittedScenarios.has(scenario.id)) {
+        console.log('Scenario already submitted, moving to next');
+        currentScenarioIndex++;
+        displayCurrentScenario();
+        return;
+      }
+      
       // Display scenario section
       document.getElementById('scenarioSection').style.display = 'block';
       
@@ -1431,22 +1440,34 @@
       submitBtn.parentNode.replaceChild(newSubmitBtn, submitBtn);
       
       newSubmitBtn.addEventListener('click', function() {
-        if (sessionData.scenarioResponse) {
+        if (sessionData.scenarioResponse && !this.disabled) {
+          // Immediately disable button to prevent double-click
+          this.disabled = true;
+          this.textContent = 'Submitting...';
+          
+          // Disable all response options immediately
+          document.querySelectorAll('.response-option').forEach(btn => {
+            btn.disabled = true;
+            btn.style.cursor = 'not-allowed';
+          });
+          
           // Save response
           google.script.run
-            .withSuccessHandler(() => {
-              // Disable further changes
-              document.querySelectorAll('.response-option').forEach(btn => {
-                btn.disabled = true;
-                btn.style.cursor = 'not-allowed';
-              });
-              this.disabled = true;
+            .withSuccessHandler((result) => {
+              // Check if it was a duplicate
+              if (result.duplicate) {
+                console.log('Duplicate submission prevented');
+              }
+              
               this.textContent = 'Response Submitted';
               
               // Update status
               const status = document.getElementById('responseStatus');
               status.textContent = `Response submitted: "${sessionData.scenarioResponse.text}"`;
               status.style.color = 'var(--button-success)';
+              
+              // Mark scenario as submitted
+              submittedScenarios.add(sessionData.scenarioId);
               
               console.log('Response saved successfully');
               console.log('Auto-advance enabled?', CONFIG.AUTO_ADVANCE_SCENARIOS);
