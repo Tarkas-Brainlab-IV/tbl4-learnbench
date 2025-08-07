@@ -1653,7 +1653,51 @@
         return;
       }
       
-      // Load configuration from server first
+      // Try batch loading first if available
+      if (google.script.run.getInitialDataBatch) {
+        google.script.run
+          .withSuccessHandler((batchData) => {
+            if (batchData && batchData.success) {
+              // Update config
+              const serverConfig = batchData.config;
+              CONFIG.ENABLE_AI = serverConfig.enableAI;
+              CONFIG.ENABLE_CONTEXT = serverConfig.enableContext;
+              CONFIG.CONTEXT_WINDOW = serverConfig.contextWindow;
+              CONFIG.PROMPTS_BEFORE_DEMOGRAPHICS = serverConfig.promptsBeforeDemographics;
+              CONFIG.AUTO_ADVANCE_SCENARIOS = serverConfig.autoAdvanceScenarios;
+              CONFIG.AUTO_CLOSE_ON_COMPLETE = serverConfig.autoCloseOnComplete;
+              
+              // Store scenarios
+              if (batchData.scenarios) {
+                allScenarios = batchData.scenarios;
+                currentScenarioIndex = 0;
+              }
+              
+              // Store demographics status
+              if (batchData.demographicsStatus) {
+                sessionData.demographicsCollected = batchData.demographicsStatus.hasDemographics;
+              }
+              
+              console.log('Batch data loaded successfully');
+              initializeMainInterfaceContinue();
+            } else {
+              // Fallback to individual loading
+              loadConfigIndividually();
+            }
+          })
+          .withFailureHandler(() => {
+            // Fallback to individual loading
+            loadConfigIndividually();
+          })
+          .getInitialDataBatch(sessionData.participantId);
+      } else {
+        // Fallback to original loading method
+        loadConfigIndividually();
+      }
+    }
+    
+    function loadConfigIndividually() {
+      // Original configuration loading
       google.script.run
         .withSuccessHandler((serverConfig) => {
           // Update local config

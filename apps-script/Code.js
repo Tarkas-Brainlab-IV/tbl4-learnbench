@@ -66,9 +66,9 @@ function generateParticipantHash(nricLast4) {
   }
 }
 
-// Client-accessible function to get configuration
+// Client-accessible function to get configuration (CACHED)
 function getClientConfig() {
-  const config = getConfig();
+  const config = getConfigCached ? getConfigCached() : getConfig();
   // Return only client-relevant settings
   return {
     enableAI: config.enableAI,
@@ -469,20 +469,34 @@ function classifySubmissionTiming(participantId, cohort) {
 // Store for conversation contexts (in-memory per session)
 const conversationCache = {};
 
-// Get conversation history for a participant
+// Get conversation history for a participant (OPTIMIZED)
 function getConversationContext(participantId) {
-  const config = getConfig();
+  const config = getConfigCached ? getConfigCached() : getConfig();
   if (!config.enableContext) return [];
   
-  // Try to get from cache first
+  // Try to get from in-memory cache first
   if (conversationCache[participantId]) {
     return conversationCache[participantId];
   }
   
-  // Otherwise, fetch from sheet
+  // Use optimized history fetch if available
+  if (typeof getParticipantHistoryCached !== 'undefined') {
+    const history = getParticipantHistoryCached(participantId, config.contextWindow);
+    conversationCache[participantId] = history;
+    return history;
+  }
+  
+  // Fallback to original implementation
   const sheet = getOrCreateSheet();
-  const data = sheet.getDataRange().getValues();
-  const headers = data[0];
+  const lastRow = sheet.getLastRow();
+  
+  if (lastRow <= 1) return [];
+  
+  // Read only last 50 rows instead of entire sheet
+  const startRow = Math.max(2, lastRow - 50);
+  const numRows = lastRow - startRow + 1;
+  const data = sheet.getRange(startRow, 1, numRows, 10).getValues();
+  const headers = sheet.getRange(1, 1, 1, 10).getValues()[0];
   
   // Find column indices
   const participantCol = headers.indexOf('Participant ID');
@@ -491,7 +505,7 @@ function getConversationContext(participantId) {
   const timestampCol = headers.indexOf('Timestamp');
   
   // Get this participant's history
-  const history = data.slice(1)
+  const history = data
     .filter(row => row[participantCol] === participantId)
     .map(row => ({
       timestamp: row[timestampCol],
@@ -514,7 +528,7 @@ function processPrompt(data) {
   try {
     // Detect cohort based on clustering and participant history
     const cohortInfo = detectCohort(data.participantId);
-    const config = getConfig();
+    const config = getConfigCached ? getConfigCached() : getConfig();
     
     // Check if out-of-class submissions are allowed
     if (!cohortInfo.inClass && !config.allowOutOfClass && cohortInfo.cohort === 'OUT-OF-CLASS') {
@@ -1303,8 +1317,14 @@ function saveScenarioResponse(participantId, scenarioId, response) {
   }
 }
 
-// Function to get ALL scenarios for a participant (for sequential presentation)
+// Function to get ALL scenarios for a participant (CACHED VERSION)
 function getAllScenariosForParticipant(participantId) {
+  // Use cached version if available
+  if (typeof getAllScenariosCached !== 'undefined') {
+    return getAllScenariosCached(participantId);
+  }
+  
+  // Fallback to original implementation
   try {
     const sheet = getOrCreateSheet();
     const ss = sheet.getParent();
@@ -1416,6 +1436,40 @@ function testScenarioSystem() {
     
   } catch (error) {
     console.error('Test failed:', error);
+    return {
+      success: false,
+      error: error.toString()
+    };
+  }
+}
+
+// Batch load all initial data for faster startup
+function getInitialDataBatch(participantId) {
+  console.log('Batch loading initial data for:', participantId);
+  
+  try {
+    // Load all data in parallel where possible
+    const config = getConfigCached ? getConfigCached() : getConfig();
+    const scenarios = getAllScenariosForParticipant(participantId);
+    const demographicsStatus = checkDemographicsStatus(participantId);
+    
+    return {
+      success: true,
+      config: {
+        enableAI: config.enableAI,
+        enableContext: config.enableContext,
+        contextWindow: config.contextWindow,
+        enableDemographics: config.enableDemographics,
+        promptsBeforeDemographics: config.promptsBeforeDemographics,
+        autoAdvanceScenarios: config.autoAdvanceScenarios,
+        autoCloseOnComplete: config.autoCloseOnComplete
+      },
+      scenarios: scenarios,
+      demographicsStatus: demographicsStatus,
+      serverTime: new Date().toISOString()
+    };
+  } catch (error) {
+    console.error('Error in batch load:', error);
     return {
       success: false,
       error: error.toString()
