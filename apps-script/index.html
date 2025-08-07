@@ -629,10 +629,10 @@
             <span class="optional-tag">(optional)</span>
           </label>
           <div class="button-group">
-            <button type="button" class="button-option" data-name="qualification" data-value="high-school">High School</button>
+            <button type="button" class="button-option" data-name="qualification" data-value="secondary">Secondary</button>
+            <button type="button" class="button-option" data-name="qualification" data-value="polytechnic">Polytechnic/ITE</button>
             <button type="button" class="button-option" data-name="qualification" data-value="bachelor">Bachelor's</button>
-            <button type="button" class="button-option" data-name="qualification" data-value="master">Master's</button>
-            <button type="button" class="button-option" data-name="qualification" data-value="phd">PhD</button>
+            <button type="button" class="button-option" data-name="qualification" data-value="postgraduate">Postgraduate</button>
             <button type="button" class="button-option" data-name="qualification" data-value="">Prefer not to say</button>
           </div>
         </div>
@@ -695,15 +695,17 @@
           </div>
         </div>
         
-        <!-- Military Experience -->
+        <!-- Emergency/Tactical Experience -->
         <div class="demographic-field">
           <label>
-            Military Experience
+            Emergency/Tactical Experience
             <span class="optional-tag">(optional)</span>
           </label>
           <div class="button-group">
-            <button type="button" class="button-option" data-name="military" data-value="yes">Yes</button>
-            <button type="button" class="button-option" data-name="military" data-value="no">No</button>
+            <button type="button" class="button-option" data-name="military" data-value="military-ns">Military/NS</button>
+            <button type="button" class="button-option" data-name="military" data-value="police-scdf">Police/SCDF</button>
+            <button type="button" class="button-option" data-name="military" data-value="healthcare">Healthcare/First Aid</button>
+            <button type="button" class="button-option" data-name="military" data-value="none">None</button>
             <button type="button" class="button-option" data-name="military" data-value="">Prefer not to say</button>
           </div>
         </div>
@@ -1073,7 +1075,11 @@
       // Disable submit button and show loading
       const submitBtn = document.getElementById('submit');
       submitBtn.disabled = true;
-      document.getElementById('output').innerHTML = '<div class="loading">Processing your prompt...</div>';
+      // Clear any existing content first, then show processing message
+      document.getElementById('output').innerHTML = '';
+      setTimeout(() => {
+        document.getElementById('output').innerHTML = '<div class="loading">Processing your prompt...</div>';
+      }, 50);
       // Clear metadata area (keeping for spacing but no content)
       document.getElementById('metadata').innerHTML = '';
       clearMessage();
