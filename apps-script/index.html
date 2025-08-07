@@ -973,6 +973,8 @@
     
     function handleLoginSuccess(result) {
       sessionData.participantId = result.hash;
+      sessionData.startTime = new Date().toISOString();  // Track session start time
+      sessionData.totalTokensUsed = 0;  // Initialize token counter
       
       // Check if demographics were already collected
       const demographicsCollected = localStorage.getItem('demographicsCollected_' + sessionData.participantId);
@@ -1052,7 +1054,26 @@
       const logoutBtn = document.getElementById('logoutBtn');
       const logoutHandler = () => {
         if (confirm('End your session?')) {
-          location.reload();
+          // Calculate session duration
+          const endTime = new Date().toISOString();
+          const duration = Math.round((new Date(endTime) - new Date(sessionData.startTime)) / 1000); // in seconds
+          
+          // Save session metrics before reload
+          google.script.run
+            .withSuccessHandler(() => {
+              location.reload();
+            })
+            .withFailureHandler(() => {
+              // Still reload even if save fails
+              location.reload();
+            })
+            .saveSessionMetrics(sessionData.participantId, {
+              startTime: sessionData.startTime,
+              endTime: endTime,
+              durationSeconds: duration,
+              totalTokensUsed: sessionData.totalTokensUsed || 0,
+              promptCount: sessionData.promptCount || 0
+            });
         }
       };
       logoutBtn.removeEventListener('click', logoutHandler);
@@ -1102,6 +1123,12 @@
       document.getElementById('submit').disabled = false;
       
       if (response.success) {
+        // Track token usage if provided
+        if (response.tokenUsage) {
+          sessionData.totalTokensUsed = (sessionData.totalTokensUsed || 0) + 
+            (response.tokenUsage.totalTokens || 0);
+        }
+        
         // Parse markdown if enabled
         const outputElement = document.getElementById('output');
         if (CONFIG.ENABLE_MARKDOWN && typeof marked !== 'undefined') {

@@ -451,7 +451,9 @@ function processPrompt(data) {
       success: true,
       output: geminiResponse.output,
       model: geminiResponse.model,
-      tokens: geminiResponse.tokens,
+      tokenUsage: {
+        totalTokens: geminiResponse.tokens || 0
+      },
       timestamp: timestamp.toISOString(),
       needsDemographics: needsDemographics
     };
@@ -1028,6 +1030,49 @@ function setClassSchedule(schedule) {
 function setAllowOutOfClass(allowed) {
   PropertiesService.getScriptProperties().setProperty('ALLOW_OUT_OF_CLASS', allowed ? 'true' : 'false');
   console.log('Out-of-class submissions:', allowed ? 'ALLOWED' : 'BLOCKED');
+}
+
+// Function to save session metrics
+function saveSessionMetrics(participantId, metrics) {
+  try {
+    const sheet = getOrCreateSheet();
+    
+    // Find or create a metrics sheet
+    const ss = sheet.getParent();
+    let metricsSheet = ss.getSheetByName('Session_Metrics');
+    
+    if (!metricsSheet) {
+      metricsSheet = ss.insertSheet('Session_Metrics');
+      // Add headers
+      metricsSheet.getRange(1, 1, 1, 7).setValues([[
+        'Participant ID',
+        'Start Time',
+        'End Time',
+        'Duration (seconds)',
+        'Total Tokens Used',
+        'Prompt Count',
+        'Date'
+      ]]);
+      metricsSheet.getRange(1, 1, 1, 7).setFontWeight('bold');
+    }
+    
+    // Append metrics data
+    metricsSheet.appendRow([
+      participantId,
+      metrics.startTime,
+      metrics.endTime,
+      metrics.durationSeconds,
+      metrics.totalTokensUsed,
+      metrics.promptCount,
+      new Date().toISOString()
+    ]);
+    
+    console.log('Session metrics saved for participant:', participantId);
+    return { success: true };
+  } catch (error) {
+    console.error('Error saving session metrics:', error);
+    return { success: false, error: error.toString() };
+  }
 }
 
 // Save demographics data to a separate, protected sheet
