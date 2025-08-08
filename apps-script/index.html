@@ -1691,8 +1691,14 @@
       if (editor) {
         editor.setValue(''); // Clear user's prompt
       }
-      document.getElementById('response').innerHTML = ''; // Clear AI response
-      document.getElementById('message').innerHTML = ''; // Clear any messages
+      const responseEl = document.getElementById('response');
+      if (responseEl) {
+        responseEl.innerHTML = ''; // Clear AI response
+      }
+      const messageEl = document.getElementById('message');
+      if (messageEl) {
+        messageEl.innerHTML = ''; // Clear any messages
+      }
       
       // Check if scenario text is actually an image URL
       const isTextAnImage = scenario.text && (
