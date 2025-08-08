@@ -64,6 +64,37 @@ const CacheManager = {
   },
   
   /**
+   * Clear cache - alias for invalidate
+   */
+  clear(pattern) {
+    if (!pattern) {
+      this.invalidate('*');
+    } else {
+      this.invalidate(pattern);
+    }
+  },
+  
+  /**
+   * Remove specific cache key
+   */
+  remove(key) {
+    const cache = CacheService.getScriptCache();
+    cache.remove(key);
+  },
+  
+  /**
+   * Put value in cache
+   */
+  put(key, value, duration = this.DURATIONS.SHORT) {
+    const cache = CacheService.getScriptCache();
+    try {
+      cache.put(key, JSON.stringify(value), duration);
+    } catch (e) {
+      console.error(`Cache put error for ${key}:`, e);
+    }
+  },
+  
+  /**
    * Batch get multiple cache entries
    */
   getBatch(keys) {

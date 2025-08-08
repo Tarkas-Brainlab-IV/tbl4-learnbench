@@ -8,6 +8,6 @@
 # Ignore node_modules
 node_modules/**
 
-# Ignore test files
-**/*test*
+# Ignore test files (but not test-scenarios.js which we need)
 **/*spec*
+tests-*.js

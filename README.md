@@ -44,14 +44,32 @@ NERV LearnBench provides a streamlined platform for:
 
 5. **Deploy** your Web App in the Apps Script editor
 
-### Method 2: Automated Setup with Clasp
+### Method 2: Automated Setup with Clasp (RECOMMENDED)
 
-If authentication works for you:
 ```bash
-npm install
-npm run setup  # Login and create project
-npm run push   # Push files
-npm run deploy # Deploy web app
+# Install clasp globally
+npm install -g @google/clasp
+
+# Login to Google
+clasp login
+
+# For existing project
+clasp clone [your-script-id]
+
+# For new project
+clasp create --title "PromptLab" --type webapp
+
+# Push files to Google Apps Script
+clasp push
+
+# Open in browser
+clasp open-script
+
+# Deploy as web app
+clasp deploy --description "Initial deployment"
+
+# View deployment URL
+clasp deployments
 ```
 
 ### Method 3: Manual Copy
@@ -75,7 +93,8 @@ To use the real Gemini API instead of mock responses:
 
 **Using Clasp**:
 ```bash
-npm run deploy
+clasp deploy --description "v2.0 Performance Update"
+clasp open-web-app  # Opens the deployed app
 ```
 
 **Or manually in Apps Script editor**:
@@ -91,12 +110,18 @@ npm run deploy
 
 **Watch for changes** (auto-push on save):
 ```bash
-npm run watch  # Or: clasp push --watch
+clasp push --watch
 ```
 
 **View logs in real-time**:
 ```bash
-npm run logs  # Or: clasp logs --tail
+clasp logs --tail
+```
+
+**Run functions remotely**:
+```bash
+clasp run healthCheck  # Run the health check function
+clasp run testNewSystem  # Run tests
 ```
 
 **Pull changes from Google**:
