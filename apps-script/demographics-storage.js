@@ -1,7 +1,8 @@
 // Demographics collection and storage functions
+// NOTE: This file is DEPRECATED - using saveDemographicsMain in Code.js instead
 
-// Save demographics data to separate sheet
-function saveDemographics(data) {
+// DEPRECATED - Old demographics saving function (DO NOT USE)
+function saveDemographics_OLD(data) {
   try {
     const sheet = getOrCreateDemographicsSheet();
     

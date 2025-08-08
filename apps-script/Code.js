@@ -100,7 +100,7 @@ function testDemographicsSaving() {
   };
   
   console.log('Testing demographics with:', testData);
-  const result = saveDemographics(testData);
+  const result = saveDemographicsMain(testData);
   console.log('Result:', result);
   return result;
 }
@@ -1699,8 +1699,9 @@ function saveSessionMetrics(participantId, metrics) {
 }
 
 // Save demographics data to a separate, protected sheet
-function saveDemographics(demographics) {
-  console.log('saveDemographics called with:', JSON.stringify(demographics));
+// This is the main function called from the UI
+function saveDemographicsMain(demographics) {
+  console.log('saveDemographicsMain called with:', JSON.stringify(demographics));
   
   try {
     const PROMPTLAB_SHEET_ID = PropertiesService.getScriptProperties().getProperty('PROMPTLAB_SHEET_ID');
