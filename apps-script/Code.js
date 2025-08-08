@@ -1467,7 +1467,8 @@ function getInitialDataBatch(participantId) {
         enableDemographics: config.enableDemographics,
         promptsBeforeDemographics: config.promptsBeforeDemographics,
         autoAdvanceScenarios: config.autoAdvanceScenarios,
-        autoCloseOnComplete: config.autoCloseOnComplete
+        autoCloseOnComplete: config.autoCloseOnComplete,
+        enableExitSurvey: config.enableExitSurvey
       },
       scenarios: scenarios,
       demographicsStatus: demographicsStatus,

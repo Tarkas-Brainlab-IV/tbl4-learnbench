@@ -1911,12 +1911,17 @@
     window.submitExitSurvey = submitExitSurvey;
     
     function endSession() {
+      console.log('endSession called. CONFIG:', CONFIG);
+      console.log('enableExitSurvey:', CONFIG.enableExitSurvey);
+      console.log('exitSurveyCompleted:', sessionData.exitSurveyCompleted);
+      
       // Check if exit survey should be shown
       if (CONFIG.enableExitSurvey && !sessionData.exitSurveyCompleted) {
         console.log('Showing exit survey before ending session');
         showExitSurvey();
         return;
       }
+      console.log('Skipping exit survey - either disabled or already completed');
       
       // Calculate session duration
       const endTime = new Date().toISOString();
@@ -2006,6 +2011,10 @@
               CONFIG.PROMPTS_BEFORE_DEMOGRAPHICS = serverConfig.promptsBeforeDemographics;
               CONFIG.AUTO_ADVANCE_SCENARIOS = serverConfig.autoAdvanceScenarios;
               CONFIG.AUTO_CLOSE_ON_COMPLETE = serverConfig.autoCloseOnComplete;
+              CONFIG.enableExitSurvey = serverConfig.enableExitSurvey;
+              
+              console.log('Batch config loaded:', serverConfig);
+              console.log('Exit survey enabled?', CONFIG.enableExitSurvey);
               
               // Store scenarios
               if (batchData.scenarios) {
@@ -2052,6 +2061,7 @@
             
             // Hide/show AI section based on config
             console.log('Config received from server:', serverConfig);
+            console.log('Exit survey enabled?', CONFIG.enableExitSurvey);
             console.log('AI enabled?', CONFIG.ENABLE_AI);
             
             const aiSection = document.getElementById('aiSection');
