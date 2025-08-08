@@ -167,18 +167,23 @@ function getAllScenariosCached(participantId) {
             options: []
           };
           
-          for (let j = 0; j < 5; j++) {
-            const optionIdx = 3 + (j * 2);
-            const scoreIdx = 4 + (j * 2);
-            
-            if (row[optionIdx]) {
+          // Parse ALL options (arbitrary number supported)
+          // Options start at column D (index 3), alternating option/score
+          let optionCount = 0;
+          for (let colIdx = 3; colIdx < row.length - 1; colIdx += 2) {
+            if (row[colIdx] && row[colIdx] !== '') {
+              optionCount++;
               scenario.options.push({
-                id: `option_${j + 1}`,
-                text: row[optionIdx],
-                score: row[scoreIdx] || 0
+                id: `option_${optionCount}`,
+                text: String(row[colIdx]),
+                score: Number(row[colIdx + 1]) || 0,
+                originalIndex: optionCount - 1  // Store original position for analysis
               });
             }
           }
+          
+          // CRITICAL: Randomize option order for display
+          scenario.options = shuffleArray(scenario.options);
           
           if (scenario.options.length > 0) {
             scenarios.push(scenario);
