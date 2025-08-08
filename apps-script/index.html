@@ -1983,6 +1983,7 @@
         CONFIG.PROMPTS_BEFORE_DEMOGRAPHICS = window.preloadedConfig.promptsBeforeDemographics;
         CONFIG.AUTO_ADVANCE_SCENARIOS = window.preloadedConfig.autoAdvanceScenarios;
         CONFIG.AUTO_CLOSE_ON_COMPLETE = window.preloadedConfig.autoCloseOnComplete;
+        CONFIG.enableExitSurvey = window.preloadedConfig.enableExitSurvey;
         
         // Continue with initialization immediately
         initializeMainInterfaceContinue();
@@ -2047,6 +2048,7 @@
             CONFIG.PROMPTS_BEFORE_DEMOGRAPHICS = serverConfig.promptsBeforeDemographics;
             CONFIG.AUTO_ADVANCE_SCENARIOS = serverConfig.autoAdvanceScenarios;
             CONFIG.AUTO_CLOSE_ON_COMPLETE = serverConfig.autoCloseOnComplete;
+            CONFIG.enableExitSurvey = serverConfig.enableExitSurvey;
             
             // Hide/show AI section based on config
             console.log('Config received from server:', serverConfig);
