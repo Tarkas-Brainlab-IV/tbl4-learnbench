@@ -1127,34 +1127,16 @@
         </div>
       </div>
       
-      <!-- Privacy Information -->
-      <div style="margin-bottom: 25px; padding: 15px; background: rgba(76, 175, 80, 0.1); border-radius: 8px; border: 1px solid rgba(76, 175, 80, 0.3);">
-        <h3 style="margin: 0 0 10px 0; color: var(--text-primary); font-size: 16px;">🔒 Your Privacy is Protected</h3>
-        <p style="color: var(--text-secondary); margin-bottom: 10px; line-height: 1.5;">
-          The last 4 characters of your NRIC are used <strong>only</strong> to generate a random session ID. 
-          Your actual NRIC is never stored or transmitted.
-        </p>
-        
-        <!-- Example ID Display -->
-        <div style="background: var(--bg-primary); padding: 10px; border-radius: 4px; margin: 10px 0; text-align: center;">
-          <small style="color: var(--text-muted);">Example: NRIC ending "123A" becomes session ID:</small><br>
-          <code id="exampleId" style="font-family: monospace; font-size: 14px; color: var(--text-primary); font-weight: bold;">A7B3C9E2</code>
-        </div>
-        
-        <p style="color: var(--text-secondary); margin: 0; font-size: 13px;">
-          This anonymous ID is used to group your responses. It cannot be traced back to you.
-        </p>
-      </div>
-      
       <!-- Login Form -->
-      <div class="form-group" style="background: var(--bg-primary); padding: 20px; border-radius: 8px; border: 2px solid var(--border-color);">
-        <label for="nricInput" style="font-weight: 600; color: var(--text-primary); margin-bottom: 10px; display: block;">
-          Enter last 4 characters of your NRIC:
+      <div class="form-group" style="background: var(--bg-primary); padding: 20px; border-radius: 8px; border: 2px solid var(--border-color); margin-bottom: 20px;">
+        <label for="nricInput" style="font-weight: 600; color: var(--text-primary); margin-bottom: 12px; display: block;">
+          Enter last 4 characters of your NRIC to create a random and anonymous session ID
         </label>
         <input type="text" id="nricInput" placeholder="e.g., 123A" maxlength="4" required 
                style="text-transform: uppercase; font-size: 24px; text-align: center; letter-spacing: 3px; background: var(--bg-secondary); color: var(--text-primary); border: 2px solid var(--border-color); padding: 12px; width: 100%; border-radius: 4px; font-weight: 600;">
-        <small style="color: var(--text-muted); display: block; margin-top: 8px; text-align: center;">
-          Your NRIC is not stored • Press Enter when ready
+        <small style="color: var(--text-muted); display: block; margin-top: 10px; text-align: center; line-height: 1.4;">
+          The last four characters of your NRIC are not stored or transmitted.<br>
+          Example: "123A" becomes session ID: <code id="exampleId" style="font-family: monospace; color: var(--text-primary); font-weight: bold;">A7B3C9E2</code>
         </small>
       </div>
       
