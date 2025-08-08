@@ -77,7 +77,8 @@ function getClientConfig() {
     enableDemographics: config.enableDemographics,
     promptsBeforeDemographics: config.promptsBeforeDemographics,
     autoAdvanceScenarios: config.autoAdvanceScenarios,
-    autoCloseOnComplete: config.autoCloseOnComplete
+    autoCloseOnComplete: config.autoCloseOnComplete,
+    enableExitSurvey: config.enableExitSurvey
   };
 }
 
@@ -94,7 +95,7 @@ function getConfig() {
     }
     
     // Read setup values (B column contains values)
-    const setupData = setupSheet.getRange('B2:B10').getValues();
+    const setupData = setupSheet.getRange('B2:B11').getValues();
     
     return {
       enableAI: setupData[0][0] !== false, // B2 - Enable AI Assistance
@@ -106,7 +107,8 @@ function getConfig() {
       autoCloseOnComplete: setupData[6][0] !== false, // B8 - Auto-close on Complete
       geminiApiKey: PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY'),
       allowOutOfClass: setupData[7][0] !== false, // B9 - Allow Out of Class
-      timezone: setupData[8][0] || 'Asia/Singapore' // B10 - Timezone
+      timezone: setupData[8][0] || 'Asia/Singapore', // B10 - Timezone
+      enableExitSurvey: setupData[9][0] !== false // B11 - Enable Exit Survey
     };
   } catch (error) {
     console.error('Error reading setup sheet, using defaults:', error);
@@ -122,7 +124,8 @@ function getConfig() {
       autoCloseOnComplete: true,
       geminiApiKey: props.getProperty('GEMINI_API_KEY'),
       allowOutOfClass: props.getProperty('ALLOW_OUT_OF_CLASS') === 'true' || false,
-      timezone: props.getProperty('TIMEZONE') || 'Asia/Singapore'
+      timezone: props.getProperty('TIMEZONE') || 'Asia/Singapore',
+      enableExitSurvey: true
     };
   }
 }
@@ -142,7 +145,8 @@ function createSetupSheet(spreadsheet) {
     ['Auto-advance Scenarios', true, 'Automatically advance to next scenario after submission'],
     ['Auto-close on Complete', true, 'Close browser window after final scenario'],
     ['Allow Out of Class', true, 'Allow submissions outside scheduled class times'],
-    ['Timezone', 'Asia/Singapore', 'Timezone for class schedule']
+    ['Timezone', 'Asia/Singapore', 'Timezone for class schedule'],
+    ['Enable Exit Survey', true, 'Show NASA-TLX style exit survey after all scenarios']
   ];
   
   // Set data
@@ -167,6 +171,7 @@ function createSetupSheet(spreadsheet) {
   
   sheet.getRange('B2:B5').setDataValidation(booleanRule);
   sheet.getRange('B7:B9').setDataValidation(booleanRule);
+  sheet.getRange('B11').setDataValidation(booleanRule);
   
   console.log('✅ Setup sheet created with default values');
   console.log('Configure settings in column B (checkboxes for true/false, numbers for numeric values)');
@@ -1729,6 +1734,116 @@ function checkDemographicsStatus(participantId) {
   } catch (error) {
     console.error('Error checking demographics status:', error);
     return { hasDemographics: false };
+  }
+}
+
+// Save exit survey data to spreadsheet
+function saveExitSurvey(surveyData) {
+  try {
+    const SPREADSHEET_ID = PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID');
+    if (!SPREADSHEET_ID) {
+      throw new Error('SPREADSHEET_ID not configured');
+    }
+    
+    const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+    
+    // Get or create Exit Survey sheet
+    let surveySheet = spreadsheet.getSheetByName('Exit_Survey');
+    if (!surveySheet) {
+      surveySheet = spreadsheet.insertSheet('Exit_Survey');
+      
+      // Add headers if new sheet
+      const headers = [
+        'Timestamp',
+        'Participant ID',
+        'Session ID',
+        'Mental Demand',
+        'Confidence Level',
+        'AI Reliance',
+        'Overall Experience',
+        'Completion Time (ms)',
+        'Total Scenarios Completed'
+      ];
+      
+      surveySheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+      
+      // Format headers
+      surveySheet.getRange(1, 1, 1, headers.length)
+        .setFontWeight('bold')
+        .setBackground('#9C27B0')
+        .setFontColor('#FFFFFF');
+      
+      // Set column widths
+      surveySheet.setColumnWidth(1, 180); // Timestamp
+      surveySheet.setColumnWidth(2, 120); // Participant ID
+      surveySheet.setColumnWidth(3, 120); // Session ID
+      surveySheet.setColumnWidth(4, 120); // Mental Demand
+      surveySheet.setColumnWidth(5, 120); // Confidence
+      surveySheet.setColumnWidth(6, 120); // AI Reliance
+      surveySheet.setColumnWidth(7, 140); // Overall Experience
+      surveySheet.setColumnWidth(8, 140); // Completion Time
+      surveySheet.setColumnWidth(9, 180); // Scenarios Completed
+      
+      // Freeze header row
+      surveySheet.setFrozenRows(1);
+      
+      // Protect the sheet similar to demographics
+      const protection = surveySheet.protect();
+      protection.setDescription('Exit Survey data - Protected');
+      protection.setWarningOnly(false);
+      protection.removeEditors(protection.getEditors());
+      if (protection.canDomainEdit()) {
+        protection.setDomainEdit(false);
+      }
+      
+      console.log('Created and protected Exit Survey sheet');
+    }
+    
+    // Check if participant already submitted exit survey
+    const existingData = surveySheet.getDataRange().getValues();
+    const participantCol = 1; // Participant ID column (0-indexed)
+    const sessionCol = 2; // Session ID column (0-indexed)
+    
+    for (let i = 1; i < existingData.length; i++) {
+      if (existingData[i][participantCol] === surveyData.participantId && 
+          existingData[i][sessionCol] === surveyData.sessionId) {
+        console.log('Exit survey already recorded for participant:', surveyData.participantId, 'session:', surveyData.sessionId);
+        return {
+          success: true,
+          message: 'Exit survey already recorded',
+          duplicate: true
+        };
+      }
+    }
+    
+    // Prepare row data
+    const timestamp = new Date();
+    const rowData = [
+      timestamp,
+      surveyData.participantId,
+      surveyData.sessionId || '',
+      surveyData.mentalDemand || 0,
+      surveyData.confidence || 0,
+      surveyData.aiReliance || 0,
+      surveyData.overallExperience || 0,
+      surveyData.completionTime || 0,
+      surveyData.totalScenarios || 0
+    ];
+    
+    // Append the data
+    surveySheet.appendRow(rowData);
+    
+    console.log('Exit survey saved for participant:', surveyData.participantId);
+    
+    return {
+      success: true,
+      message: 'Exit survey saved successfully',
+      timestamp: timestamp.toISOString()
+    };
+    
+  } catch (error) {
+    console.error('Error saving exit survey:', error);
+    throw error;
   }
 }
 

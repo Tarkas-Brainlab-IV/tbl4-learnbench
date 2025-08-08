@@ -102,7 +102,7 @@ function getConfigCached() {
         setupSheet = createSetupSheet(ss);
       }
       
-      const setupData = setupSheet.getRange('B2:B10').getValues();
+      const setupData = setupSheet.getRange('B2:B11').getValues();
       
       return {
         enableAI: setupData[0][0] !== false,
@@ -114,7 +114,8 @@ function getConfigCached() {
         autoCloseOnComplete: setupData[6][0] !== false,
         geminiApiKey: PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY'),
         allowOutOfClass: setupData[7][0] !== false,
-        timezone: setupData[8][0] || 'Asia/Singapore'
+        timezone: setupData[8][0] || 'Asia/Singapore',
+        enableExitSurvey: setupData[9][0] !== false
       };
     } catch (error) {
       console.error('Error reading setup sheet, using defaults:', error);
@@ -129,7 +130,8 @@ function getConfigCached() {
         autoCloseOnComplete: true,
         geminiApiKey: props.getProperty('GEMINI_API_KEY'),
         allowOutOfClass: props.getProperty('ALLOW_OUT_OF_CLASS') === 'true' || false,
-        timezone: props.getProperty('TIMEZONE') || 'Asia/Singapore'
+        timezone: props.getProperty('TIMEZONE') || 'Asia/Singapore',
+        enableExitSurvey: true
       };
     }
   }, CacheManager.DURATIONS.CONFIG);

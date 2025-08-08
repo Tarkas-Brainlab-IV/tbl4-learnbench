@@ -1067,6 +1067,89 @@
     </div>
   </div>
   
+  <!-- Exit Survey Modal -->
+  <div id="exitSurveyModal" class="demographics-screen" style="display: none;">
+    <div class="demographics-container" style="max-width: 600px;">
+      <h1>Final Questions</h1>
+      <p class="subtitle">
+        Thank you for completing the tasks! Please answer these brief questions about your experience.
+      </p>
+      
+      <form id="exitSurveyForm">
+        <!-- Overall Workload -->
+        <div class="survey-question" style="margin: 25px 0;">
+          <label style="font-weight: 600; color: var(--text-primary); display: block; margin-bottom: 10px;">
+            Overall, how demanding was this task?
+          </label>
+          <div class="slider-container" style="padding: 10px 20px;">
+            <input type="range" id="workloadSlider" min="0" max="100" value="50" 
+                   style="width: 100%; cursor: pointer;">
+            <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 13px; color: var(--text-muted);">
+              <span>0 - Very low</span>
+              <span id="workloadValue" style="font-weight: bold; color: var(--text-primary);">50</span>
+              <span>100 - Very high</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Confidence in Choice -->
+        <div class="survey-question" style="margin: 25px 0;">
+          <label style="font-weight: 600; color: var(--text-primary); display: block; margin-bottom: 10px;">
+            How confident are you that your final selection was the best option?
+          </label>
+          <div class="slider-container" style="padding: 10px 20px;">
+            <input type="range" id="choiceConfidenceSlider" min="0" max="100" value="50" 
+                   style="width: 100%; cursor: pointer;">
+            <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 13px; color: var(--text-muted);">
+              <span>0 - Not at all</span>
+              <span id="choiceConfidenceValue" style="font-weight: bold; color: var(--text-primary);">50</span>
+              <span>100 - Extremely</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- AI Confidence (conditional) -->
+        <div class="survey-question" id="aiConfidenceQuestion" style="margin: 25px 0;">
+          <label style="font-weight: 600; color: var(--text-primary); display: block; margin-bottom: 10px;">
+            How confident are you in the AI's advice for this task?
+          </label>
+          <div class="slider-container" style="padding: 10px 20px;">
+            <input type="range" id="aiConfidenceSlider" min="0" max="100" value="50" 
+                   style="width: 100%; cursor: pointer;">
+            <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 13px; color: var(--text-muted);">
+              <span>0 - Not at all</span>
+              <span id="aiConfidenceValue" style="font-weight: bold; color: var(--text-primary);">50</span>
+              <span>100 - Extremely</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- AI Reliance (conditional) -->
+        <div class="survey-question" id="aiRelianceQuestion" style="margin: 25px 0;">
+          <label style="font-weight: 600; color: var(--text-primary); display: block; margin-bottom: 10px;">
+            To what extent did you rely on the AI when deciding?
+          </label>
+          <div class="slider-container" style="padding: 10px 20px;">
+            <input type="range" id="aiRelianceSlider" min="0" max="100" value="50" 
+                   style="width: 100%; cursor: pointer;">
+            <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 13px; color: var(--text-muted);">
+              <span>0 - Not at all</span>
+              <span id="aiRelianceValue" style="font-weight: bold; color: var(--text-primary);">50</span>
+              <span>100 - Completely</span>
+            </div>
+          </div>
+        </div>
+      </form>
+      
+      <div class="modal-buttons" style="margin-top: 30px;">
+        <button type="button" class="btn-continue" onclick="submitExitSurvey()" 
+                style="width: 100%; padding: 14px; font-size: 16px; background: var(--button-success); color: white; border: none; border-radius: 4px; cursor: pointer;">
+          Complete Session
+        </button>
+      </div>
+    </div>
+  </div>
+  
   <!-- Header Bar -->
   <div class="header-bar" id="headerBar" style="display: none;">
     <div class="session-info" id="sessionInfo"></div>
@@ -1731,7 +1814,110 @@
       status.style.display = 'none';
     }
     
+    function showExitSurvey() {
+      console.log('Showing exit survey...');
+      
+      // Hide AI questions if AI was disabled
+      if (!CONFIG.ENABLE_AI) {
+        document.getElementById('aiConfidenceQuestion').style.display = 'none';
+        document.getElementById('aiRelianceQuestion').style.display = 'none';
+      }
+      
+      // Show the modal
+      const modal = document.getElementById('exitSurveyModal');
+      if (modal) {
+        modal.style.display = 'flex';
+        modal.classList.add('active');
+        document.getElementById('headerBar').style.display = 'none';
+        
+        // Initialize slider value displays
+        initializeSliders();
+      }
+    }
+    
+    function initializeSliders() {
+      // Workload slider
+      const workloadSlider = document.getElementById('workloadSlider');
+      const workloadValue = document.getElementById('workloadValue');
+      if (workloadSlider && workloadValue) {
+        workloadSlider.addEventListener('input', (e) => {
+          workloadValue.textContent = e.target.value;
+        });
+      }
+      
+      // Choice confidence slider
+      const choiceSlider = document.getElementById('choiceConfidenceSlider');
+      const choiceValue = document.getElementById('choiceConfidenceValue');
+      if (choiceSlider && choiceValue) {
+        choiceSlider.addEventListener('input', (e) => {
+          choiceValue.textContent = e.target.value;
+        });
+      }
+      
+      // AI confidence slider
+      const aiConfSlider = document.getElementById('aiConfidenceSlider');
+      const aiConfValue = document.getElementById('aiConfidenceValue');
+      if (aiConfSlider && aiConfValue) {
+        aiConfSlider.addEventListener('input', (e) => {
+          aiConfValue.textContent = e.target.value;
+        });
+      }
+      
+      // AI reliance slider
+      const aiRelSlider = document.getElementById('aiRelianceSlider');
+      const aiRelValue = document.getElementById('aiRelianceValue');
+      if (aiRelSlider && aiRelValue) {
+        aiRelSlider.addEventListener('input', (e) => {
+          aiRelValue.textContent = e.target.value;
+        });
+      }
+    }
+    
+    function submitExitSurvey() {
+      const surveyData = {
+        participantId: sessionData.participantId,
+        timestamp: new Date().toISOString(),
+        workload: parseInt(document.getElementById('workloadSlider').value),
+        choiceConfidence: parseInt(document.getElementById('choiceConfidenceSlider').value)
+      };
+      
+      // Add AI questions if enabled
+      if (CONFIG.ENABLE_AI) {
+        surveyData.aiConfidence = parseInt(document.getElementById('aiConfidenceSlider').value);
+        surveyData.aiReliance = parseInt(document.getElementById('aiRelianceSlider').value);
+      }
+      
+      // Save survey data
+      google.script.run
+        .withSuccessHandler(() => {
+          console.log('Exit survey saved');
+          // Mark survey as completed
+          sessionData.exitSurveyCompleted = true;
+          // Hide modal and proceed to end session
+          document.getElementById('exitSurveyModal').style.display = 'none';
+          endSession();
+        })
+        .withFailureHandler((error) => {
+          console.error('Failed to save exit survey:', error);
+          // Mark as completed anyway to prevent loop
+          sessionData.exitSurveyCompleted = true;
+          // Still end session even if save fails
+          endSession();
+        })
+        .saveExitSurvey(surveyData);
+    }
+    
+    // Make function globally accessible
+    window.submitExitSurvey = submitExitSurvey;
+    
     function endSession() {
+      // Check if exit survey should be shown
+      if (CONFIG.enableExitSurvey && !sessionData.exitSurveyCompleted) {
+        console.log('Showing exit survey before ending session');
+        showExitSurvey();
+        return;
+      }
+      
       // Calculate session duration
       const endTime = new Date().toISOString();
       const duration = Math.round((new Date(endTime) - new Date(sessionData.startTime)) / 1000);
