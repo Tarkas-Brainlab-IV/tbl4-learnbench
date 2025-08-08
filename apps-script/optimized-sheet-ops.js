@@ -70,13 +70,13 @@ function getOrCreateSheetOptimized() {
   
   // Get or create sheet
   const SHEET_NAME = 'Prompts';
-  const SPREADSHEET_ID = PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID');
+  const PROMPTLAB_SHEET_ID = PropertiesService.getScriptProperties().getProperty('PROMPTLAB_SHEET_ID');
   
-  if (!SPREADSHEET_ID) {
-    throw new Error('SPREADSHEET_ID not found in script properties');
+  if (!PROMPTLAB_SHEET_ID) {
+    throw new Error('PROMPTLAB_SHEET_ID not found in script properties');
   }
   
-  const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const spreadsheet = SpreadsheetApp.openById(PROMPTLAB_SHEET_ID);
   let sheet = spreadsheet.getSheetByName(SHEET_NAME);
   
   if (!sheet) {

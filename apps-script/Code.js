@@ -84,11 +84,48 @@ function getClientConfig() {
   };
 }
 
+// Test function to manually create Exit Survey sheet and test saving
+function testExitSurvey() {
+  // First check if PROMPTLAB_SHEET_ID is configured
+  const PROMPTLAB_SHEET_ID = PropertiesService.getScriptProperties().getProperty('PROMPTLAB_SHEET_ID');
+  if (!PROMPTLAB_SHEET_ID) {
+    return 'ERROR: PROMPTLAB_SHEET_ID not found in Script Properties. Run ensureSpreadsheetExists() first.';
+  }
+  
+  console.log('Using spreadsheet ID:', PROMPTLAB_SHEET_ID);
+  
+  const testData = {
+    participantId: 'TEST123',
+    sessionId: 'test_session',
+    mentalDemand: 75,
+    confidence: 80,
+    aiReliance: 60,
+    overallExperience: 85,
+    completionTime: 120000,
+    totalScenarios: 3
+  };
+  
+  try {
+    const result = saveExitSurvey(testData);
+    console.log('Test result:', result);
+    
+    // Try to open the spreadsheet and list all sheets
+    const ss = SpreadsheetApp.openById(PROMPTLAB_SHEET_ID);
+    const sheets = ss.getSheets().map(s => s.getName());
+    console.log('All sheets in spreadsheet:', sheets.join(', '));
+    
+    return 'Success! Sheets in your spreadsheet: ' + sheets.join(', ');
+  } catch (error) {
+    console.error('Test failed:', error);
+    return 'Error: ' + error.toString();
+  }
+}
+
 // Debug function to check Setup sheet values
 function debugSetupSheet() {
   try {
-    const SPREADSHEET_ID = PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID');
-    const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const PROMPTLAB_SHEET_ID = PropertiesService.getScriptProperties().getProperty('PROMPTLAB_SHEET_ID');
+    const spreadsheet = SpreadsheetApp.openById(PROMPTLAB_SHEET_ID);
     const setupSheet = spreadsheet.getSheetByName('Setup');
     
     if (!setupSheet) {
@@ -674,21 +711,21 @@ function getOrCreateSheet() {
   // Fallback to direct implementation
   const SHEET_NAME = 'Prompts';
   
-  // Get SPREADSHEET_ID from script properties
-  const SPREADSHEET_ID = PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID');
+  // Get PROMPTLAB_SHEET_ID from script properties
+  const PROMPTLAB_SHEET_ID = PropertiesService.getScriptProperties().getProperty('PROMPTLAB_SHEET_ID');
   
-  if (!SPREADSHEET_ID) {
-    throw new Error('SPREADSHEET_ID not found in script properties. Please run quickSetup() or add it in Project Settings → Script Properties');
+  if (!PROMPTLAB_SHEET_ID) {
+    throw new Error('PROMPTLAB_SHEET_ID not found in script properties. Please run quickSetup() or add it in Project Settings → Script Properties');
   }
   
   let spreadsheet;
   
   try {
     // Open the spreadsheet by ID (fixed: was using SpreadsheetApp.open which caused errors)
-    spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+    spreadsheet = SpreadsheetApp.openById(PROMPTLAB_SHEET_ID);
   } catch (error) {
     console.error('Error opening spreadsheet:', error);
-    throw new Error('Failed to open spreadsheet. Please check the SPREADSHEET_ID in script properties.');
+    throw new Error('Failed to open spreadsheet. Please check the PROMPTLAB_SHEET_ID in script properties.');
   }
   
   // Get or create sheet
@@ -1104,7 +1141,7 @@ function setupScriptProperties() {
   
   // Set these properties in the Apps Script editor:
   // File > Project Properties > Script Properties
-  scriptProperties.setProperty('SPREADSHEET_ID', '1152xJb3pqhug19ExNKCdAFy1sSvMa2GyJIVoEkLd29o');
+  scriptProperties.setProperty('PROMPTLAB_SHEET_ID', '1152xJb3pqhug19ExNKCdAFy1sSvMa2GyJIVoEkLd29o');
   scriptProperties.setProperty('GEMINI_API_KEY', 'YOUR_API_KEY_HERE');
   scriptProperties.setProperty('ENABLE_CONTEXT', 'false'); // Set to 'true' to enable conversation memory
   scriptProperties.setProperty('CONTEXT_WINDOW', '5'); // Number of previous exchanges to remember
@@ -1130,13 +1167,13 @@ function sanityCheck() {
 // Function to add headers to existing sheet - RUN THIS IF HEADERS ARE MISSING
 function addHeadersToSheet() {
   try {
-    const SPREADSHEET_ID = PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID');
-    if (!SPREADSHEET_ID) {
-      console.error('No SPREADSHEET_ID found. Run quickSetup() first.');
+    const PROMPTLAB_SHEET_ID = PropertiesService.getScriptProperties().getProperty('PROMPTLAB_SHEET_ID');
+    if (!PROMPTLAB_SHEET_ID) {
+      console.error('No PROMPTLAB_SHEET_ID found. Run quickSetup() first.');
       return false;
     }
     
-    const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const spreadsheet = SpreadsheetApp.openById(PROMPTLAB_SHEET_ID);
     const sheet = spreadsheet.getSheetByName('Prompts');
     
     if (!sheet) {
@@ -1218,7 +1255,7 @@ function quickSetup() {
   const scriptProperties = PropertiesService.getScriptProperties();
   
   // Set the spreadsheet ID
-  scriptProperties.setProperty('SPREADSHEET_ID', '1152xJb3pqhug19ExNKCdAFy1sSvMa2GyJIVoEkLd29o');
+  scriptProperties.setProperty('PROMPTLAB_SHEET_ID', '1152xJb3pqhug19ExNKCdAFy1sSvMa2GyJIVoEkLd29o');
   scriptProperties.setProperty('ALLOW_OUT_OF_CLASS', 'true');
   scriptProperties.setProperty('PROMPTS_BEFORE_DEMOGRAPHICS', '1'); // Set to 1 for testing, 3 for production
   scriptProperties.setProperty('ENABLE_DEMOGRAPHICS', 'true');
@@ -1246,7 +1283,7 @@ function quickSetup() {
     }
     
     console.log('\n=== Setup Summary ===');
-    console.log('Spreadsheet ID:', scriptProperties.getProperty('SPREADSHEET_ID'));
+    console.log('Spreadsheet ID:', scriptProperties.getProperty('PROMPTLAB_SHEET_ID'));
     console.log('Allow out-of-class:', scriptProperties.getProperty('ALLOW_OUT_OF_CLASS'));
     console.log('Context enabled:', scriptProperties.getProperty('ENABLE_CONTEXT') || 'false');
     
@@ -1628,12 +1665,12 @@ function saveSessionMetrics(participantId, metrics) {
 // Save demographics data to a separate, protected sheet
 function saveDemographics(demographics) {
   try {
-    const SPREADSHEET_ID = PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID');
-    if (!SPREADSHEET_ID) {
-      throw new Error('SPREADSHEET_ID not configured');
+    const PROMPTLAB_SHEET_ID = PropertiesService.getScriptProperties().getProperty('PROMPTLAB_SHEET_ID');
+    if (!PROMPTLAB_SHEET_ID) {
+      throw new Error('PROMPTLAB_SHEET_ID not configured');
     }
     
-    const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const spreadsheet = SpreadsheetApp.openById(PROMPTLAB_SHEET_ID);
     
     // Get or create Demographics sheet
     let demographicsSheet = spreadsheet.getSheetByName('Demographics');
@@ -1744,10 +1781,10 @@ function saveDemographics(demographics) {
 // Function to check if demographics exist for a participant
 function checkDemographicsStatus(participantId) {
   try {
-    const SPREADSHEET_ID = PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID');
-    if (!SPREADSHEET_ID) return { hasDemographics: false };
+    const PROMPTLAB_SHEET_ID = PropertiesService.getScriptProperties().getProperty('PROMPTLAB_SHEET_ID');
+    if (!PROMPTLAB_SHEET_ID) return { hasDemographics: false };
     
-    const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const spreadsheet = SpreadsheetApp.openById(PROMPTLAB_SHEET_ID);
     const demographicsSheet = spreadsheet.getSheetByName('Demographics');
     
     if (!demographicsSheet) return { hasDemographics: false };
@@ -1772,13 +1809,15 @@ function checkDemographicsStatus(participantId) {
 
 // Save exit survey data to spreadsheet
 function saveExitSurvey(surveyData) {
+  console.log('saveExitSurvey called with:', surveyData);
   try {
-    const SPREADSHEET_ID = PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID');
-    if (!SPREADSHEET_ID) {
-      throw new Error('SPREADSHEET_ID not configured');
+    const PROMPTLAB_SHEET_ID = PropertiesService.getScriptProperties().getProperty('PROMPTLAB_SHEET_ID');
+    if (!PROMPTLAB_SHEET_ID) {
+      throw new Error('PROMPTLAB_SHEET_ID not configured');
     }
+    console.log('Opening spreadsheet:', PROMPTLAB_SHEET_ID);
     
-    const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const spreadsheet = SpreadsheetApp.openById(PROMPTLAB_SHEET_ID);
     
     // Get or create Exit Survey sheet
     let surveySheet = spreadsheet.getSheetByName('Exit_Survey');

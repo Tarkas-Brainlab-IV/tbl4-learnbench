@@ -1920,38 +1920,60 @@
         surveyData.aiReliance = parseInt(document.getElementById('aiRelianceSlider').value);
       }
       
-      // Show loading state immediately
+      // Hide the survey modal immediately
       const modal = document.getElementById('exitSurveyModal');
       if (modal) {
-        modal.innerHTML = `
-          <div class="demographics-container" style="text-align: center; padding: 50px;">
-            <h2>Saving survey responses...</h2>
-            <p style="color: var(--text-secondary);">Please wait a moment.</p>
-          </div>
-        `;
+        modal.style.display = 'none';
       }
       
-      // Save survey data
+      // Show completion screen immediately
+      document.getElementById('mainInterface').innerHTML = `
+        <div style="text-align: center; padding: 50px;">
+          <h2 style="color: var(--button-success); margin-bottom: 20px;">Session Complete!</h2>
+          <p style="color: var(--text-secondary); margin-bottom: 30px;">Thank you for participating. All scenarios have been completed.</p>
+          <p style="color: var(--text-muted); font-size: 14px;">This window will close automatically in 5 seconds...</p>
+        </div>
+      `;
+      
+      // Save survey data in background
       google.script.run
         .withSuccessHandler(() => {
           console.log('Exit survey saved successfully');
-          // Mark survey as completed
-          sessionData.exitSurveyCompleted = true;
-          // Hide modal
-          if (modal) modal.style.display = 'none';
-          // Continue to completion screen
-          endSessionContinue();
         })
         .withFailureHandler((error) => {
           console.error('Failed to save exit survey:', error);
-          // Mark as completed anyway to prevent loop
-          sessionData.exitSurveyCompleted = true;
-          // Hide modal
-          if (modal) modal.style.display = 'none';
-          // Still show completion screen
-          endSessionContinue();
         })
         .saveExitSurvey(surveyData);
+      
+      // Save session metrics in background
+      const endTime = new Date().toISOString();
+      const duration = Math.round((new Date(endTime) - new Date(sessionData.startTime)) / 1000);
+      
+      google.script.run
+        .withSuccessHandler(() => {
+          console.log('Session metrics saved');
+        })
+        .withFailureHandler(() => {
+          console.log('Failed to save session metrics');
+        })
+        .saveSessionMetrics({
+          participantId: sessionData.participantId,
+          startTime: sessionData.startTime,
+          endTime: endTime,
+          duration: duration,
+          totalTokensUsed: sessionData.totalTokensUsed || 0,
+          promptCount: sessionData.promptCount || 0,
+          scenariosCompleted: currentScenarioIndex
+        });
+      
+      // Auto-close window if configured
+      if (CONFIG.AUTO_CLOSE_ON_COMPLETE) {
+        setTimeout(() => {
+          window.close();
+          // Fallback if window.close() doesn't work
+          document.body.innerHTML = '<div style="text-align: center; padding: 50px;"><h3>You may now close this window.</h3></div>';
+        }, 5000);
+      }
     }
     
     // Make function globally accessible
