@@ -157,6 +157,99 @@ function clearConfigCache() {
   return 'Cache cleared - config will be reloaded from Setup sheet';
 }
 
+/**
+ * CRITICAL DEBUGGING FUNCTION - USE THIS WHEN THINGS GO WRONG
+ * 
+ * Lessons from Aug 8, 2025: Cache corruption can cause working deployments
+ * to suddenly fail. Symptoms include wrong data structures (e.g., 'title' 
+ * instead of 'text' fields) and old data persisting across deployments.
+ * 
+ * ALWAYS TRY THIS FIRST when debugging unexpected behavior.
+ */
+function EMERGENCY_CLEAR_ALL_CACHES() {
+  console.log('=== EMERGENCY CACHE CLEAR INITIATED ===');
+  console.log('This fixes most "suddenly stopped working" issues');
+  
+  let cleared = [];
+  let errors = [];
+  
+  // 1. Clear Script Cache (most common culprit)
+  try {
+    const scriptCache = CacheService.getScriptCache();
+    scriptCache.removeAll(['dummy']); // This clears entire cache
+    cleared.push('Script Cache');
+    console.log('✓ Script cache cleared');
+  } catch (e) {
+    errors.push('Script Cache: ' + e.toString());
+  }
+  
+  // 2. Clear User Cache
+  try {
+    const userCache = CacheService.getUserCache();
+    userCache.removeAll(['dummy']);
+    cleared.push('User Cache');
+    console.log('✓ User cache cleared');
+  } catch (e) {
+    errors.push('User Cache: ' + e.toString());
+  }
+  
+  // 3. Clear Document Cache
+  try {
+    const docCache = CacheService.getDocumentCache();
+    docCache.removeAll(['dummy']);
+    cleared.push('Document Cache');
+    console.log('✓ Document cache cleared');
+  } catch (e) {
+    errors.push('Document Cache: ' + e.toString());
+  }
+  
+  // 4. Clear in-memory conversation cache
+  if (typeof conversationCache !== 'undefined') {
+    for (let key in conversationCache) {
+      delete conversationCache[key];
+    }
+    cleared.push('Conversation Memory Cache');
+    console.log('✓ Conversation cache cleared');
+  }
+  
+  // 5. Clear specific known cache keys that cause problems
+  try {
+    const cache = CacheService.getScriptCache();
+    const problemKeys = [
+      'config', 'scenarios', 'demographics', 'cohort_schedule'
+    ];
+    
+    // Clear participant-specific caches
+    for (let i = 0; i < 100; i++) {
+      problemKeys.push(`scenarios_${i}`);
+      problemKeys.push(`history_${i}`);
+      problemKeys.push(`demographics_${i}`);
+    }
+    
+    cache.removeAll(problemKeys);
+    cleared.push('Known Problem Keys');
+    console.log('✓ Known problem cache keys cleared');
+  } catch (e) {
+    errors.push('Problem Keys: ' + e.toString());
+  }
+  
+  const result = {
+    success: errors.length === 0,
+    cleared: cleared,
+    errors: errors,
+    message: 'Cache clear completed. If issues persist, check DEBUGGING-CRITICAL-NOTES.md',
+    timestamp: new Date().toISOString()
+  };
+  
+  console.log('=== CACHE CLEAR COMPLETE ===');
+  console.log('Cleared:', cleared.join(', '));
+  if (errors.length > 0) {
+    console.log('Errors:', errors.join(', '));
+  }
+  
+  return result;
+}
+
 // Debug function to check Setup sheet values
 function debugSetupSheet() {
   try {
