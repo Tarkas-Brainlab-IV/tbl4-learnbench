@@ -2085,6 +2085,28 @@
         CONFIG.AUTO_CLOSE_ON_COMPLETE = window.preloadedConfig.autoCloseOnComplete;
         CONFIG.enableExitSurvey = window.preloadedConfig.enableExitSurvey;
         
+        // Hide/show AI section based on config
+        const aiSection = document.getElementById('aiSection');
+        if (aiSection) {
+          if (CONFIG.ENABLE_AI === false) {
+            console.log('Hiding AI section - AI is disabled (preloaded config)');
+            aiSection.style.display = 'none';
+            
+            // Add a note that AI is disabled
+            const scenarioSection = document.getElementById('scenarioSection');
+            if (scenarioSection && !document.getElementById('aiDisabledNote')) {
+              const note = document.createElement('div');
+              note.id = 'aiDisabledNote';
+              note.style.cssText = 'padding: 15px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; margin: 20px 0; color: var(--text-secondary); text-align: center;';
+              note.innerHTML = '<strong>AI assistance is disabled for this session.</strong><br>Please focus on the scenario questions above.';
+              scenarioSection.insertAdjacentElement('afterend', note);
+            }
+          } else {
+            console.log('Showing AI section - AI is enabled (preloaded config)');
+            aiSection.style.display = 'block';
+          }
+        }
+        
         // Continue with initialization immediately
         initializeMainInterfaceContinue();
         
@@ -2113,6 +2135,29 @@
               
               console.log('Batch config loaded:', serverConfig);
               console.log('Exit survey enabled?', CONFIG.enableExitSurvey);
+              console.log('AI enabled?', CONFIG.ENABLE_AI);
+              
+              // Hide/show AI section based on config
+              const aiSection = document.getElementById('aiSection');
+              if (aiSection) {
+                if (CONFIG.ENABLE_AI === false) {
+                  console.log('Hiding AI section - AI is disabled');
+                  aiSection.style.display = 'none';
+                  
+                  // Add a note that AI is disabled
+                  const scenarioSection = document.getElementById('scenarioSection');
+                  if (scenarioSection && !document.getElementById('aiDisabledNote')) {
+                    const note = document.createElement('div');
+                    note.id = 'aiDisabledNote';
+                    note.style.cssText = 'padding: 15px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; margin: 20px 0; color: var(--text-secondary); text-align: center;';
+                    note.innerHTML = '<strong>AI assistance is disabled for this session.</strong><br>Please focus on the scenario questions above.';
+                    scenarioSection.insertAdjacentElement('afterend', note);
+                  }
+                } else {
+                  console.log('Showing AI section - AI is enabled');
+                  aiSection.style.display = 'block';
+                }
+              }
               
               // Store scenarios
               if (batchData.scenarios) {
