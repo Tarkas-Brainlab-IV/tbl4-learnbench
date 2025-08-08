@@ -1689,64 +1689,15 @@ function saveDemographics(demographics) {
     
     const spreadsheet = SpreadsheetApp.openById(PROMPTLAB_SHEET_ID);
     
-    // Get or create Demographics sheet
+    // Get existing Demographics sheet - DON'T CREATE A NEW ONE
     let demographicsSheet = spreadsheet.getSheetByName('Demographics');
     if (!demographicsSheet) {
-      demographicsSheet = spreadsheet.insertSheet('Demographics');
-      
-      // Add headers if new sheet
-      const headers = [
-        'Timestamp',
-        'Participant ID',
-        'Age Band',
-        'Gender', 
-        'Qualification',
-        'Discipline',
-        'English Proficiency',
-        'Coding Experience',
-        'LLM Usage',
-        'Occupation',
-        'Consent Given',
-        'Collection Method'
-      ];
-      
-      demographicsSheet.getRange(1, 1, 1, headers.length).setValues([headers]);
-      
-      // Format headers
-      demographicsSheet.getRange(1, 1, 1, headers.length)
-        .setFontWeight('bold')
-        .setBackground('#2196F3')
-        .setFontColor('#FFFFFF');
-      
-      // Set column widths
-      demographicsSheet.setColumnWidth(1, 180); // Timestamp
-      demographicsSheet.setColumnWidth(2, 120); // Participant ID
-      demographicsSheet.setColumnWidth(3, 100); // Age Band
-      demographicsSheet.setColumnWidth(4, 100); // Gender
-      demographicsSheet.setColumnWidth(5, 150); // Qualification
-      demographicsSheet.setColumnWidth(6, 150); // Discipline
-      demographicsSheet.setColumnWidth(7, 150); // English Proficiency
-      demographicsSheet.setColumnWidth(8, 150); // Coding Experience
-      demographicsSheet.setColumnWidth(9, 120); // LLM Usage
-      demographicsSheet.setColumnWidth(10, 150); // Occupation
-      demographicsSheet.setColumnWidth(11, 120); // Consent
-      demographicsSheet.setColumnWidth(12, 150); // Collection Method
-      
-      // Freeze header row
-      demographicsSheet.setFrozenRows(1);
-      
-      // IMPORTANT: Protect the sheet - only script owner can edit
-      const protection = demographicsSheet.protect();
-      protection.setDescription('Demographics data - Protected');
-      protection.setWarningOnly(false);
-      // Remove all editors except the owner
-      protection.removeEditors(protection.getEditors());
-      if (protection.canDomainEdit()) {
-        protection.setDomainEdit(false);
-      }
-      
-      console.log('Created and protected Demographics sheet');
+      throw new Error('Demographics sheet not found - please create it manually with the correct headers');
     }
+    
+    // Get the existing headers to understand the column structure
+    const headers = demographicsSheet.getRange(1, 1, 1, demographicsSheet.getLastColumn()).getValues()[0];
+    console.log('Existing headers:', headers);
     
     // Check if participant already submitted demographics
     const existingData = demographicsSheet.getDataRange().getValues();
@@ -1763,33 +1714,49 @@ function saveDemographics(demographics) {
       }
     }
     
-    // Add new demographics row
-    const row = [
-      new Date(), // Timestamp
-      demographics.participantId,
-      demographics.ageBand || '',
-      demographics.gender || '',
-      demographics.qualification || '',
-      demographics.discipline || '',
-      demographics.englishProficiency || '',
-      demographics.codingExperience || '',
-      demographics.llmUsage || '',
-      demographics.occupation || '',
-      demographics.consentGiven ? 'Yes' : 'No',
-      'After 3 prompts' // Collection method
-    ];
+    // Build row based on actual header columns
+    // Based on the sheet you showed: Timestamp, Participant ID, Age Group, Gender, Education, Discipline, 
+    // English Proficiency, Coding Experience, AI Usage, Military Experience, Demographics Provided, Consent Given
+    const row = [];
+    
+    // Map the data to match the exact column headers
+    const columnMapping = {
+      'Timestamp': new Date(),
+      'Participant ID': demographics.participantId || '',
+      'Age Group': demographics.ageBand || '',
+      'Age Band': demographics.ageBand || '',
+      'Gender': demographics.gender || '',
+      'Education': demographics.qualification || '',
+      'Qualification': demographics.qualification || '',
+      'Discipline': demographics.discipline || '',
+      'English Proficiency': demographics.englishProficiency || '',
+      'Coding Experience': demographics.codingExperience || '',
+      'AI Usage': demographics.llmUsage || '',
+      'LLM Usage': demographics.llmUsage || '',
+      'Military Experience': demographics.occupation || '',
+      'Occupation': demographics.occupation || '',
+      'Demographics Provided': 'TRUE',
+      'Consent Given': demographics.consentGiven ? 'TRUE' : 'FALSE',
+      'Collection Method': 'After prompt'
+    };
+    
+    // Build row based on actual headers
+    for (let i = 0; i < headers.length; i++) {
+      const header = headers[i];
+      if (columnMapping[header] !== undefined) {
+        row.push(columnMapping[header]);
+      } else {
+        row.push(''); // Default empty for unmapped columns
+        console.log('Warning: No mapping for header:', header);
+      }
+    }
     
     console.log('Row to be saved:', row);
-    console.log('Individual values:');
-    console.log('- participantId:', demographics.participantId);
-    console.log('- ageBand:', demographics.ageBand);
-    console.log('- gender:', demographics.gender);
-    console.log('- qualification:', demographics.qualification);
-    console.log('- discipline:', demographics.discipline);
-    console.log('- englishProficiency:', demographics.englishProficiency);
-    console.log('- codingExperience:', demographics.codingExperience);
-    console.log('- llmUsage:', demographics.llmUsage);
-    console.log('- occupation:', demographics.occupation);
+    console.log('Headers:', headers);
+    console.log('Mapped values:');
+    for (let i = 0; i < headers.length; i++) {
+      console.log(`- ${headers[i]}: ${row[i]}`);
+    }
     
     demographicsSheet.appendRow(row);
     
