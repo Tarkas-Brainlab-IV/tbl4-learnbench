@@ -1108,16 +1108,68 @@
     
     <!-- Login Screen -->
     <div id="loginScreen">
-      <div class="form-group">
-        <label for="nricInput">Enter last 4 characters of your NRIC:</label>
-        <input type="text" id="nricInput" placeholder="e.g., 123A" maxlength="4" required 
-               style="text-transform: uppercase; font-size: 20px; text-align: center; letter-spacing: 2px; background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color);">
-        <small style="color: var(--text-secondary); display: block; margin-top: 5px;">Used to generate a random ID • Not stored • Not linked to your identity</small>
+      <!-- Welcome Information -->
+      <div style="margin-bottom: 30px; padding: 20px; background: var(--bg-secondary); border-radius: 8px; border: 1px solid var(--border-color);">
+        <h2 style="margin: 0 0 15px 0; color: var(--text-primary); font-size: 24px;">Welcome to the Learning Research Study</h2>
+        
+        <div style="color: var(--text-secondary); line-height: 1.6;">
+          <p style="margin-bottom: 12px;">
+            <strong style="color: var(--text-primary);">This is a voluntary research exercise</strong> to understand how people interact with AI in learning environments. 
+            Your participation helps improve educational outcomes for future learners.
+          </p>
+          
+          <p style="margin-bottom: 12px;">
+            ✓ <strong>Not an assessment</strong> - This does not affect your grades<br>
+            ✓ <strong>Completely anonymous</strong> - Your identity is never stored<br>
+            ✓ <strong>Research purpose only</strong> - Data used to improve AI learning tools<br>
+            ✓ <strong>You can stop anytime</strong> - Participation is entirely voluntary
+          </p>
+        </div>
       </div>
       
-      <button id="loginBtn" class="submit-btn" style="width: 100%; margin-top: 20px;">
-        Start Session
+      <!-- Privacy Information -->
+      <div style="margin-bottom: 25px; padding: 15px; background: rgba(76, 175, 80, 0.1); border-radius: 8px; border: 1px solid rgba(76, 175, 80, 0.3);">
+        <h3 style="margin: 0 0 10px 0; color: var(--text-primary); font-size: 16px;">🔒 Your Privacy is Protected</h3>
+        <p style="color: var(--text-secondary); margin-bottom: 10px; line-height: 1.5;">
+          The last 4 characters of your NRIC are used <strong>only</strong> to generate a random session ID. 
+          Your actual NRIC is never stored or transmitted.
+        </p>
+        
+        <!-- Example ID Display -->
+        <div style="background: var(--bg-primary); padding: 10px; border-radius: 4px; margin: 10px 0; text-align: center;">
+          <small style="color: var(--text-muted);">Example: NRIC ending "123A" becomes session ID:</small><br>
+          <code id="exampleId" style="font-family: monospace; font-size: 14px; color: var(--text-primary); font-weight: bold;">A7B3C9E2</code>
+        </div>
+        
+        <p style="color: var(--text-secondary); margin: 0; font-size: 13px;">
+          This anonymous ID is used to group your responses. It cannot be traced back to you.
+        </p>
+      </div>
+      
+      <!-- Login Form -->
+      <div class="form-group" style="background: var(--bg-primary); padding: 20px; border-radius: 8px; border: 2px solid var(--border-color);">
+        <label for="nricInput" style="font-weight: 600; color: var(--text-primary); margin-bottom: 10px; display: block;">
+          Enter last 4 characters of your NRIC:
+        </label>
+        <input type="text" id="nricInput" placeholder="e.g., 123A" maxlength="4" required 
+               style="text-transform: uppercase; font-size: 24px; text-align: center; letter-spacing: 3px; background: var(--bg-secondary); color: var(--text-primary); border: 2px solid var(--border-color); padding: 12px; width: 100%; border-radius: 4px; font-weight: 600;">
+        <small style="color: var(--text-muted); display: block; margin-top: 8px; text-align: center;">
+          Your NRIC is not stored • Press Enter when ready
+        </small>
+      </div>
+      
+      <!-- Consent Notice -->
+      <div style="margin: 20px 0; padding: 12px; background: var(--bg-secondary); border-radius: 6px; border-left: 4px solid var(--button-primary);">
+        <p style="color: var(--text-secondary); margin: 0; font-size: 13px; line-height: 1.5;">
+          <strong>By participating:</strong> You consent to anonymous data collection for research to understand 
+          how people interact with AI and improve learning outcomes. You may withdraw at any time by closing this window.
+        </p>
+      </div>
+      
+      <button id="loginBtn" class="submit-btn" style="width: 100%; margin-top: 15px; padding: 14px; font-size: 16px;">
+        Start Anonymous Session
       </button>
+      
     </div>
     
     <!-- Main Interface (hidden initially) -->
@@ -1302,12 +1354,34 @@
       // Initialize login handlers
       setupLogin();
       
+      // Generate example session ID
+      generateExampleSessionId();
+      
       // Start preloading in background while user enters NRIC
       startBackgroundPreload();
       
       // Focus on NRIC input
       document.getElementById('nricInput').focus();
     });
+    
+    // Generate example session ID to show how anonymization works
+    function generateExampleSessionId() {
+      const examples = ['A7B3C9E2', 'D4F8A1C6', 'B9E2F5A3', 'C6A8D2B4', 'E3B7C1F9'];
+      const randomExample = examples[Math.floor(Math.random() * examples.length)];
+      const exampleElement = document.getElementById('exampleId');
+      if (exampleElement) {
+        exampleElement.textContent = randomExample;
+        
+        // Animate the example to draw attention
+        setTimeout(() => {
+          exampleElement.style.transition = 'all 0.5s';
+          exampleElement.style.color = 'var(--button-primary)';
+          setTimeout(() => {
+            exampleElement.style.color = 'var(--text-primary)';
+          }, 2000);
+        }, 1000);
+      }
+    }
     
     // Background preloading while user enters NRIC
     let preloadedData = null;
