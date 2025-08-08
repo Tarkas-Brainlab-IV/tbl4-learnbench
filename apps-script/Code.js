@@ -1558,19 +1558,23 @@ function getAllScenariosForParticipant(participantId) {
           options: []
         };
         
-        // Parse up to 5 options
-        for (let j = 0; j < 5; j++) {
-          const optionIdx = 3 + (j * 2); // Option1 at index 3, Option2 at 5, etc.
-          const scoreIdx = 4 + (j * 2);  // Score1 at index 4, Score2 at 6, etc.
-          
-          if (row[optionIdx]) {
+        // Parse ALL options (arbitrary number supported)
+        // Options start at column D (index 3), alternating option/score
+        let optionCount = 0;
+        for (let colIdx = 3; colIdx < row.length - 1; colIdx += 2) {
+          if (row[colIdx] && row[colIdx] !== '') {
+            optionCount++;
             scenario.options.push({
-              id: `option_${j + 1}`,
-              text: row[optionIdx],
-              score: row[scoreIdx] || 0
+              id: `option_${optionCount}`,
+              text: String(row[colIdx]),
+              score: Number(row[colIdx + 1]) || 0,
+              originalIndex: optionCount - 1  // Store original position for analysis
             });
           }
         }
+        
+        // CRITICAL: Randomize option order for display
+        scenario.options = shuffleArray(scenario.options);
         
         if (scenario.options.length > 0) {
           scenarios.push(scenario);
@@ -1703,6 +1707,16 @@ function hashCode(str) {
     hash = hash & hash; // Convert to 32bit integer
   }
   return hash;
+}
+
+// Fisher-Yates shuffle for randomizing options
+function shuffleArray(array) {
+  const shuffled = [...array]; // Create a copy
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
 }
 
 // Create example scenarios sheet

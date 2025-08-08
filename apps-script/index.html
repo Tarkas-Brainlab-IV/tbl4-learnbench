@@ -1687,10 +1687,34 @@
       }
       progressEl.textContent = progressText;
       
-      // Set scenario text (with markdown)
+      // CRITICAL FIX: Clear AI response and user input from previous scenario
+      if (editor) {
+        editor.setValue(''); // Clear user's prompt
+      }
+      document.getElementById('response').innerHTML = ''; // Clear AI response
+      document.getElementById('message').innerHTML = ''; // Clear any messages
+      
+      // Check if scenario text is actually an image URL
+      const isTextAnImage = scenario.text && (
+        scenario.text.startsWith('http://') || 
+        scenario.text.startsWith('https://') ||
+        scenario.text.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i)
+      );
+      
+      // Check if imageUrl field contains text (for A/B testing)
+      const isImageUrlText = scenario.imageUrl && !(
+        scenario.imageUrl.startsWith('http://') || 
+        scenario.imageUrl.startsWith('https://') ||
+        scenario.imageUrl.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i)
+      );
+      
+      // Set scenario content (text or image in text field)
       const scenarioTextEl = document.getElementById('scenarioText');
-      if (CONFIG.ENABLE_MARKDOWN && typeof marked !== 'undefined') {
-        // Configure marked for GitHub Flavored Markdown (includes tables)
+      if (isTextAnImage) {
+        // Text field contains an image URL - display as image
+        scenarioTextEl.innerHTML = `<img src="${scenario.text}" style="max-width: 100%; height: auto;" onerror="this.style.display='none'; this.parentElement.innerHTML='[Image failed to load]'">`;
+      } else if (CONFIG.ENABLE_MARKDOWN && typeof marked !== 'undefined' && scenario.text) {
+        // Regular markdown text
         marked.setOptions({
           breaks: true,
           gfm: true,  // This enables tables!
@@ -1712,11 +1736,17 @@
         scenarioTextEl.textContent = scenario.text || '';
       }
       
-      // Set image or show placeholder
+      // Set image (or text in image field for A/B testing)
       const img = document.getElementById('scenarioImage');
       const placeholder = document.getElementById('imagePlaceholder');
       
-      if (scenario.imageUrl && scenario.imageUrl !== '') {
+      if (isImageUrlText) {
+        // Image field contains text - display as text in the image area
+        img.style.display = 'none';
+        placeholder.style.display = 'flex';
+        placeholder.innerHTML = `<div style="padding: 20px; text-align: center; color: var(--text-primary);">${scenario.imageUrl}</div>`;
+      } else if (scenario.imageUrl && scenario.imageUrl !== '') {
+        // Regular image URL
         img.src = scenario.imageUrl;
         img.style.display = 'block';
         placeholder.style.display = 'none';
@@ -1725,10 +1755,12 @@
         img.onerror = function() {
           img.style.display = 'none';
           placeholder.style.display = 'flex';
+          placeholder.innerHTML = '<span style="color: #666;">No image</span>';
         };
       } else {
         img.style.display = 'none';
         placeholder.style.display = 'flex';
+        placeholder.innerHTML = '<span style="color: #666;">No image</span>';
       }
       
       // Create response option buttons
