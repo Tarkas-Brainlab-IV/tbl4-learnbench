@@ -84,6 +84,27 @@ function getClientConfig() {
   };
 }
 
+// Test demographics saving with sample data
+function testDemographicsSaving() {
+  const testData = {
+    participantId: 'TEST123',
+    ageBand: '25-34',
+    gender: 'female',
+    qualification: 'bachelors',
+    discipline: 'engineering',
+    englishProficiency: 'fluent',
+    codingExperience: 'intermediate',
+    llmUsage: 'weekly',
+    occupation: 'none',
+    consentGiven: true
+  };
+  
+  console.log('Testing demographics with:', testData);
+  const result = saveDemographics(testData);
+  console.log('Result:', result);
+  return result;
+}
+
 // Test function to manually create Exit Survey sheet and test saving
 function testExitSurvey() {
   // First check if PROMPTLAB_SHEET_ID is configured
@@ -1689,15 +1710,53 @@ function saveDemographics(demographics) {
     
     const spreadsheet = SpreadsheetApp.openById(PROMPTLAB_SHEET_ID);
     
-    // Get existing Demographics sheet - DON'T CREATE A NEW ONE
+    // Get or create Demographics sheet
     let demographicsSheet = spreadsheet.getSheetByName('Demographics');
-    if (!demographicsSheet) {
-      throw new Error('Demographics sheet not found - please create it manually with the correct headers');
-    }
+    let headers;
     
-    // Get the existing headers to understand the column structure
-    const headers = demographicsSheet.getRange(1, 1, 1, demographicsSheet.getLastColumn()).getValues()[0];
-    console.log('Existing headers:', headers);
+    if (!demographicsSheet) {
+      // Create the sheet with proper headers
+      demographicsSheet = spreadsheet.insertSheet('Demographics');
+      headers = [
+        'Timestamp',
+        'Participant ID',
+        'Age Group',
+        'Gender',
+        'Education',
+        'Discipline',
+        'English Proficiency',
+        'Coding Experience',
+        'AI Usage',
+        'Military Experience',
+        'Demographics Provided',
+        'Consent Given'
+      ];
+      
+      // Set headers
+      demographicsSheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+      
+      // Format headers
+      demographicsSheet.getRange(1, 1, 1, headers.length)
+        .setFontWeight('bold')
+        .setBackground('#2196F3')
+        .setFontColor('#FFFFFF');
+      
+      // Set column widths
+      demographicsSheet.setColumnWidth(1, 180); // Timestamp
+      demographicsSheet.setColumnWidth(2, 120); // Participant ID
+      for (let i = 3; i <= headers.length; i++) {
+        demographicsSheet.setColumnWidth(i, 120);
+      }
+      
+      // Freeze header row
+      demographicsSheet.setFrozenRows(1);
+      
+      console.log('Created Demographics sheet with headers:', headers);
+    } else {
+      // Get existing headers
+      headers = demographicsSheet.getRange(1, 1, 1, demographicsSheet.getLastColumn()).getValues()[0];
+      console.log('Using existing headers:', headers);
+    }
     
     // Check if participant already submitted demographics
     const existingData = demographicsSheet.getDataRange().getValues();
@@ -1714,51 +1773,44 @@ function saveDemographics(demographics) {
       }
     }
     
-    // Build row based on actual header columns
-    // Based on the sheet you showed: Timestamp, Participant ID, Age Group, Gender, Education, Discipline, 
-    // English Proficiency, Coding Experience, AI Usage, Military Experience, Demographics Provided, Consent Given
-    const row = [];
+    // Create row data in exact order matching our headers
+    // This is more reliable than dynamic mapping
+    const row = [
+      new Date(),                                    // Timestamp
+      demographics.participantId || '',              // Participant ID
+      demographics.ageBand || '',                    // Age Group
+      demographics.gender || '',                     // Gender
+      demographics.qualification || '',              // Education
+      demographics.discipline || '',                 // Discipline
+      demographics.englishProficiency || '',         // English Proficiency
+      demographics.codingExperience || '',           // Coding Experience
+      demographics.llmUsage || '',                   // AI Usage
+      demographics.occupation || '',                 // Military Experience
+      'TRUE',                                        // Demographics Provided
+      demographics.consentGiven ? 'TRUE' : 'FALSE'  // Consent Given
+    ];
     
-    // Map the data to match the exact column headers
-    const columnMapping = {
-      'Timestamp': new Date(),
-      'Participant ID': demographics.participantId || '',
-      'Age Group': demographics.ageBand || '',
-      'Age Band': demographics.ageBand || '',
-      'Gender': demographics.gender || '',
-      'Education': demographics.qualification || '',
-      'Qualification': demographics.qualification || '',
-      'Discipline': demographics.discipline || '',
-      'English Proficiency': demographics.englishProficiency || '',
-      'Coding Experience': demographics.codingExperience || '',
-      'AI Usage': demographics.llmUsage || '',
-      'LLM Usage': demographics.llmUsage || '',
-      'Military Experience': demographics.occupation || '',
-      'Occupation': demographics.occupation || '',
-      'Demographics Provided': 'TRUE',
-      'Consent Given': demographics.consentGiven ? 'TRUE' : 'FALSE',
-      'Collection Method': 'After prompt'
-    };
-    
-    // Build row based on actual headers
-    for (let i = 0; i < headers.length; i++) {
-      const header = headers[i];
-      if (columnMapping[header] !== undefined) {
-        row.push(columnMapping[header]);
-      } else {
-        row.push(''); // Default empty for unmapped columns
-        console.log('Warning: No mapping for header:', header);
-      }
-    }
-    
-    console.log('Row to be saved:', row);
+    console.log('Saving demographics row:');
     console.log('Headers:', headers);
-    console.log('Mapped values:');
-    for (let i = 0; i < headers.length; i++) {
-      console.log(`- ${headers[i]}: ${row[i]}`);
+    console.log('Values:', row);
+    
+    // Verify we have the right number of columns
+    if (row.length !== headers.length) {
+      console.error(`Column mismatch! Headers: ${headers.length}, Data: ${row.length}`);
+      throw new Error('Column count mismatch');
     }
     
+    // Log each field for debugging
+    for (let i = 0; i < headers.length; i++) {
+      console.log(`${i}: ${headers[i]} = "${row[i]}"`);
+    }
+    
+    // Use appendRow which is simpler and more reliable
     demographicsSheet.appendRow(row);
+    
+    // Verify the row was added
+    const newLastRow = demographicsSheet.getLastRow();
+    console.log('Row added at position:', newLastRow);
     
     console.log('Demographics saved for participant:', demographics.participantId);
     
