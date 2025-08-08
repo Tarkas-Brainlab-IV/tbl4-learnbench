@@ -1638,8 +1638,24 @@
       console.log(`Displaying scenario ${currentScenarioIndex + 1} of ${allScenarios.length}`);
       
       if (currentScenarioIndex >= allScenarios.length) {
-        console.log('All scenarios completed - ending session');
-        // All scenarios completed - auto-end session
+        console.log('All scenarios completed');
+        
+        // Check if demographics should be shown first
+        if (CONFIG.enableDemographics && 
+            !sessionData.demographicsCollected && 
+            !sessionData.demographicsSkipped) {
+          console.log('Showing demographics before ending session');
+          
+          // Set a flag to remember we need to end session after demographics
+          sessionData.endSessionAfterDemographics = true;
+          
+          // Show demographics modal
+          showDemographicsModal();
+          return;
+        }
+        
+        // All scenarios completed and demographics handled - end session
+        console.log('Ending session');
         endSession();
         return;
       }
@@ -2476,6 +2492,14 @@
       }
       
       showMessage('You can provide this information later if you wish.', 'success');
+      
+      // Check if we need to continue to end session
+      if (sessionData.endSessionAfterDemographics) {
+        console.log('Continuing to end session after skipping demographics');
+        setTimeout(() => {
+          endSession();
+        }, 1000);
+      }
     }
     
     // Initialize button group behavior
@@ -2548,6 +2572,14 @@
           document.getElementById('headerBar').style.display = 'flex';  // Show header bar
           
           showMessage('Thank you! Your information has been saved.', 'success');
+          
+          // Check if we need to continue to end session
+          if (sessionData.endSessionAfterDemographics) {
+            console.log('Continuing to end session after demographics');
+            setTimeout(() => {
+              endSession();
+            }, 1000);
+          }
         })
         .withFailureHandler((error) => {
           console.error('Failed to save demographics:', error);
