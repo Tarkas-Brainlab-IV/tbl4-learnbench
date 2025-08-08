@@ -68,7 +68,9 @@ function generateParticipantHash(nricLast4) {
 
 // Client-accessible function to get configuration (CACHED)
 function getClientConfig() {
+  console.log('getClientConfig called');
   const config = getConfigCached ? getConfigCached() : getConfig();
+  console.log('Config retrieved:', config);
   // Return only client-relevant settings
   return {
     enableAI: config.enableAI,
@@ -80,6 +82,36 @@ function getClientConfig() {
     autoCloseOnComplete: config.autoCloseOnComplete,
     enableExitSurvey: config.enableExitSurvey
   };
+}
+
+// Debug function to check Setup sheet values
+function debugSetupSheet() {
+  try {
+    const SPREADSHEET_ID = PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID');
+    const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const setupSheet = spreadsheet.getSheetByName('Setup');
+    
+    if (!setupSheet) {
+      return "No Setup sheet found";
+    }
+    
+    const values = setupSheet.getRange('A1:C11').getValues();
+    console.log('Setup sheet values:');
+    values.forEach((row, i) => {
+      console.log(`Row ${i+1}: [${row[0]}] = [${row[1]}] (${typeof row[1]}) - ${row[2]}`);
+    });
+    
+    const b11Value = setupSheet.getRange('B11').getValue();
+    console.log(`B11 value specifically: [${b11Value}] type: ${typeof b11Value}`);
+    
+    return {
+      allValues: values,
+      b11: b11Value,
+      b11Type: typeof b11Value
+    };
+  } catch (error) {
+    return "Error: " + error.toString();
+  }
 }
 
 // Admin configuration - Set these in Script Properties
@@ -1831,10 +1863,17 @@ function saveExitSurvey(surveyData) {
       surveyData.totalScenarios || 0
     ];
     
-    // Append the data
-    surveySheet.appendRow(rowData);
+    // Use optimized append if available
+    if (typeof appendRowOptimized !== 'undefined') {
+      appendRowOptimized(surveySheet, rowData);
+    } else {
+      surveySheet.appendRow(rowData);
+    }
     
     console.log('Exit survey saved for participant:', surveyData.participantId);
+    
+    // Flush to ensure data is written immediately
+    SpreadsheetApp.flush();
     
     return {
       success: true,

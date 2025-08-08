@@ -1139,6 +1139,22 @@
             </div>
           </div>
         </div>
+        
+        <!-- Overall Experience -->
+        <div class="survey-question" style="margin: 25px 0;">
+          <label style="font-weight: 600; color: var(--text-primary); display: block; margin-bottom: 10px;">
+            Overall, how would you rate this experience?
+          </label>
+          <div class="slider-container" style="padding: 10px 20px;">
+            <input type="range" id="overallExperienceSlider" min="0" max="100" value="50" 
+                   style="width: 100%; cursor: pointer;">
+            <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 13px; color: var(--text-muted);">
+              <span>0 - Very poor</span>
+              <span id="overallExperienceValue" style="font-weight: bold; color: var(--text-primary);">50</span>
+              <span>100 - Excellent</span>
+            </div>
+          </div>
+        </div>
       </form>
       
       <div class="modal-buttons" style="margin-top: 30px;">
@@ -1871,14 +1887,31 @@
           aiRelValue.textContent = e.target.value;
         });
       }
+      
+      // Overall experience slider
+      const overallSlider = document.getElementById('overallExperienceSlider');
+      const overallValue = document.getElementById('overallExperienceValue');
+      if (overallSlider && overallValue) {
+        overallSlider.addEventListener('input', (e) => {
+          overallValue.textContent = e.target.value;
+        });
+      }
     }
     
     function submitExitSurvey() {
+      // Calculate completion time
+      const startTime = sessionData.startTime ? new Date(sessionData.startTime) : new Date();
+      const completionTime = Date.now() - startTime.getTime();
+      
       const surveyData = {
         participantId: sessionData.participantId,
+        sessionId: sessionData.sessionId || `session_${Date.now()}`,
         timestamp: new Date().toISOString(),
-        workload: parseInt(document.getElementById('workloadSlider').value),
-        choiceConfidence: parseInt(document.getElementById('choiceConfidenceSlider').value)
+        mentalDemand: parseInt(document.getElementById('workloadSlider').value),
+        confidence: parseInt(document.getElementById('choiceConfidenceSlider').value),
+        overallExperience: parseInt(document.getElementById('overallExperienceSlider').value),
+        completionTime: completionTime,
+        totalScenarios: currentScenarioIndex
       };
       
       // Add AI questions if enabled
@@ -1887,22 +1920,36 @@
         surveyData.aiReliance = parseInt(document.getElementById('aiRelianceSlider').value);
       }
       
+      // Show loading state immediately
+      const modal = document.getElementById('exitSurveyModal');
+      if (modal) {
+        modal.innerHTML = `
+          <div class="demographics-container" style="text-align: center; padding: 50px;">
+            <h2>Saving survey responses...</h2>
+            <p style="color: var(--text-secondary);">Please wait a moment.</p>
+          </div>
+        `;
+      }
+      
       // Save survey data
       google.script.run
         .withSuccessHandler(() => {
-          console.log('Exit survey saved');
+          console.log('Exit survey saved successfully');
           // Mark survey as completed
           sessionData.exitSurveyCompleted = true;
-          // Hide modal and proceed to end session
-          document.getElementById('exitSurveyModal').style.display = 'none';
-          endSession();
+          // Hide modal
+          if (modal) modal.style.display = 'none';
+          // Continue to completion screen
+          endSessionContinue();
         })
         .withFailureHandler((error) => {
           console.error('Failed to save exit survey:', error);
           // Mark as completed anyway to prevent loop
           sessionData.exitSurveyCompleted = true;
-          // Still end session even if save fails
-          endSession();
+          // Hide modal
+          if (modal) modal.style.display = 'none';
+          // Still show completion screen
+          endSessionContinue();
         })
         .saveExitSurvey(surveyData);
     }
@@ -1915,6 +1962,31 @@
       console.log('enableExitSurvey:', CONFIG.enableExitSurvey);
       console.log('exitSurveyCompleted:', sessionData.exitSurveyCompleted);
       
+      // If config not loaded, load it now
+      if (CONFIG.enableExitSurvey === null || CONFIG.enableExitSurvey === undefined) {
+        console.log('Config not loaded, fetching from server...');
+        google.script.run
+          .withSuccessHandler((serverConfig) => {
+            console.log('Config loaded in endSession:', serverConfig);
+            if (serverConfig) {
+              CONFIG.enableExitSurvey = serverConfig.enableExitSurvey;
+              console.log('Exit survey setting updated:', CONFIG.enableExitSurvey);
+            }
+            // Try again with loaded config
+            endSessionContinue();
+          })
+          .withFailureHandler(() => {
+            console.log('Failed to load config, proceeding without exit survey');
+            endSessionContinue();
+          })
+          .getClientConfig();
+        return;
+      }
+      
+      endSessionContinue();
+    }
+    
+    function endSessionContinue() {
       // Check if exit survey should be shown
       if (CONFIG.enableExitSurvey && !sessionData.exitSurveyCompleted) {
         console.log('Showing exit survey before ending session');
@@ -1973,6 +2045,7 @@
     }
     
     function initializeMainInterface() {
+      console.log('initializeMainInterface called');
       // Guard against double initialization
       if (editor) {
         console.log('Editor already initialized');
@@ -1999,9 +2072,12 @@
       }
       
       // Try batch loading first if available
+      console.log('Checking for batch loading function...');
       if (google.script.run.getInitialDataBatch) {
+        console.log('Using batch loading path');
         google.script.run
           .withSuccessHandler((batchData) => {
+            console.log('Batch data received:', batchData);
             if (batchData && batchData.success) {
               // Update config
               const serverConfig = batchData.config;
@@ -2041,6 +2117,7 @@
           .getInitialDataBatch(sessionData.participantId);
       } else {
         // Fallback to original loading method
+        console.log('Batch loading not available, using individual loading');
         loadConfigIndividually();
       }
     }
