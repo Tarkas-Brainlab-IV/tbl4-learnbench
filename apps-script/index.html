@@ -1302,9 +1302,84 @@
       // Initialize login handlers
       setupLogin();
       
+      // Start preloading in background while user enters NRIC
+      startBackgroundPreload();
+      
       // Focus on NRIC input
       document.getElementById('nricInput').focus();
     });
+    
+    // Background preloading while user enters NRIC
+    let preloadedData = null;
+    let preloadStarted = false;
+    
+    function startBackgroundPreload() {
+      if (preloadStarted) return;
+      preloadStarted = true;
+      
+      console.log('Starting background preload...');
+      
+      // 1. Wake up the backend (combat cold start)
+      if (google.script.run.testFunction) {
+        google.script.run
+          .withSuccessHandler(() => {
+            console.log('✓ Backend warmed up');
+          })
+          .withFailureHandler(() => {
+            console.log('Backend warm-up failed (non-critical)');
+          })
+          .testFunction();
+      }
+      
+      // 2. Preload configuration (most important)
+      setTimeout(() => {
+        google.script.run
+          .withSuccessHandler((config) => {
+            if (config) {
+              console.log('✓ Config preloaded');
+              // Store for later use
+              window.preloadedConfig = config;
+            }
+          })
+          .withFailureHandler(() => {
+            console.log('Config preload failed (will retry later)');
+          })
+          .getClientConfig();
+      }, 500);
+      
+      // 3. Warm up cache on backend
+      setTimeout(() => {
+        if (google.script.run.warmCache) {
+          google.script.run
+            .withSuccessHandler(() => {
+              console.log('✓ Backend cache warmed');
+            })
+            .withFailureHandler(() => {
+              console.log('Cache warm-up failed (non-critical)');
+            })
+            .warmCache();
+        }
+      }, 1000);
+      
+      // 4. Preload common libraries if not already loaded
+      setTimeout(() => {
+        // Preload CodeMirror modes if needed
+        if (typeof CodeMirror !== 'undefined' && !CodeMirror.modes.markdown) {
+          const script = document.createElement('script');
+          script.src = 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/markdown/markdown.min.js';
+          script.onload = () => console.log('✓ Markdown mode preloaded');
+          document.head.appendChild(script);
+        }
+        
+        // Preload marked.js for markdown rendering
+        if (typeof marked === 'undefined') {
+          const script = document.createElement('script');
+          script.src = 'https://cdn.jsdelivr.net/npm/marked/marked.min.js';
+          script.onload = () => console.log('✓ Marked.js preloaded');
+          document.head.appendChild(script);
+        }
+      }, 1500);
+    }
     
     function setupLogin() {
       const nricInput = document.getElementById('nricInput');
@@ -1313,6 +1388,11 @@
       // Auto-uppercase as they type
       nricInput.addEventListener('input', (e) => {
         e.target.value = e.target.value.toUpperCase();
+        
+        // Start preloading after first character typed (user is engaged)
+        if (e.target.value.length === 1 && !preloadStarted) {
+          startBackgroundPreload();
+        }
       });
       
       // Enter key to login
@@ -1650,6 +1730,24 @@
       // Guard against double initialization
       if (editor) {
         console.log('Editor already initialized');
+        return;
+      }
+      
+      // Check if we have preloaded config
+      if (window.preloadedConfig) {
+        console.log('Using preloaded config!');
+        CONFIG.ENABLE_AI = window.preloadedConfig.enableAI;
+        CONFIG.ENABLE_CONTEXT = window.preloadedConfig.enableContext;
+        CONFIG.CONTEXT_WINDOW = window.preloadedConfig.contextWindow;
+        CONFIG.PROMPTS_BEFORE_DEMOGRAPHICS = window.preloadedConfig.promptsBeforeDemographics;
+        CONFIG.AUTO_ADVANCE_SCENARIOS = window.preloadedConfig.autoAdvanceScenarios;
+        CONFIG.AUTO_CLOSE_ON_COMPLETE = window.preloadedConfig.autoCloseOnComplete;
+        
+        // Continue with initialization immediately
+        initializeMainInterfaceContinue();
+        
+        // Still load scenarios in background
+        loadAllScenarios();
         return;
       }
       
