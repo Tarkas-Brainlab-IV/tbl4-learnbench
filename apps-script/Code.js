@@ -121,6 +121,21 @@ function testExitSurvey() {
   }
 }
 
+// Test what getClientConfig actually returns
+function testGetClientConfig() {
+  const config = getClientConfig();
+  console.log('getClientConfig returned:', JSON.stringify(config, null, 2));
+  return config;
+}
+
+// Clear the cache to fix the stale config
+function clearConfigCache() {
+  const cache = CacheService.getScriptCache();
+  cache.remove('config');
+  console.log('Config cache cleared');
+  return 'Cache cleared - config will be reloaded from Setup sheet';
+}
+
 // Debug function to check Setup sheet values
 function debugSetupSheet() {
   try {
@@ -1664,6 +1679,8 @@ function saveSessionMetrics(participantId, metrics) {
 
 // Save demographics data to a separate, protected sheet
 function saveDemographics(demographics) {
+  console.log('saveDemographics called with:', JSON.stringify(demographics));
+  
   try {
     const PROMPTLAB_SHEET_ID = PropertiesService.getScriptProperties().getProperty('PROMPTLAB_SHEET_ID');
     if (!PROMPTLAB_SHEET_ID) {
@@ -1761,6 +1778,18 @@ function saveDemographics(demographics) {
       demographics.consentGiven ? 'Yes' : 'No',
       'After 3 prompts' // Collection method
     ];
+    
+    console.log('Row to be saved:', row);
+    console.log('Individual values:');
+    console.log('- participantId:', demographics.participantId);
+    console.log('- ageBand:', demographics.ageBand);
+    console.log('- gender:', demographics.gender);
+    console.log('- qualification:', demographics.qualification);
+    console.log('- discipline:', demographics.discipline);
+    console.log('- englishProficiency:', demographics.englishProficiency);
+    console.log('- codingExperience:', demographics.codingExperience);
+    console.log('- llmUsage:', demographics.llmUsage);
+    console.log('- occupation:', demographics.occupation);
     
     demographicsSheet.appendRow(row);
     

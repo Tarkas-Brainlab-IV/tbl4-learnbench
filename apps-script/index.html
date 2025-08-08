@@ -1814,6 +1814,49 @@
               console.log('Auto-advance enabled?', CONFIG.AUTO_ADVANCE_SCENARIOS);
               console.log('Current index:', currentScenarioIndex, 'Total scenarios:', allScenarios.length);
               
+              // Check if demographics should be shown (when AI is disabled)
+              console.log('=== DEMOGRAPHICS CHECK ===');
+              console.log('CONFIG.ENABLE_AI:', CONFIG.ENABLE_AI);
+              console.log('CONFIG.enableDemographics:', CONFIG.enableDemographics);
+              console.log('CONFIG.PROMPTS_BEFORE_DEMOGRAPHICS:', CONFIG.PROMPTS_BEFORE_DEMOGRAPHICS);
+              console.log('sessionData.demographicsCollected:', sessionData.demographicsCollected);
+              console.log('sessionData.demographicsSkipped:', sessionData.demographicsSkipped);
+              
+              if (!CONFIG.ENABLE_AI) {
+                const scenariosCompleted = currentScenarioIndex + 1;
+                console.log('AI is disabled');
+                console.log('Scenarios completed so far:', scenariosCompleted);
+                console.log('Target scenarios before demographics:', CONFIG.PROMPTS_BEFORE_DEMOGRAPHICS);
+                
+                if (scenariosCompleted === CONFIG.PROMPTS_BEFORE_DEMOGRAPHICS && 
+                    CONFIG.enableDemographics &&
+                    !sessionData.demographicsCollected && 
+                    !sessionData.demographicsSkipped) {
+                  console.log('✅ ALL CONDITIONS MET - Showing demographics after scenario completion');
+                  setTimeout(() => {
+                    console.log('Calling showDemographicsModal()...');
+                    showDemographicsModal();
+                  }, 1500);
+                  return; // Don't auto-advance yet
+                } else {
+                  console.log('❌ Demographics NOT shown because:');
+                  if (scenariosCompleted !== CONFIG.PROMPTS_BEFORE_DEMOGRAPHICS) {
+                    console.log('  - Scenarios completed (' + scenariosCompleted + ') !== target (' + CONFIG.PROMPTS_BEFORE_DEMOGRAPHICS + ')');
+                  }
+                  if (!CONFIG.enableDemographics) {
+                    console.log('  - Demographics disabled in config');
+                  }
+                  if (sessionData.demographicsCollected) {
+                    console.log('  - Demographics already collected');
+                  }
+                  if (sessionData.demographicsSkipped) {
+                    console.log('  - Demographics already skipped');
+                  }
+                }
+              } else {
+                console.log('AI is enabled - demographics triggers on prompts, not scenarios');
+              }
+              
               // Auto-advance to next scenario if configured
               if (CONFIG.AUTO_ADVANCE_SCENARIOS !== false) {
                 console.log('Auto-advancing to next scenario in 2 seconds...');
@@ -2155,6 +2198,9 @@
               
               // Hide/show AI section based on config
               const aiSection = document.getElementById('aiSection');
+              console.log('AI Section element found?', !!aiSection);
+              console.log('CONFIG.ENABLE_AI value:', CONFIG.ENABLE_AI, 'type:', typeof CONFIG.ENABLE_AI);
+              
               if (aiSection) {
                 if (CONFIG.ENABLE_AI === false) {
                   console.log('Hiding AI section - AI is disabled');
@@ -2169,9 +2215,6 @@
                     note.innerHTML = '<strong>AI assistance is disabled for this session.</strong><br>Please focus on the scenario questions above.';
                     scenarioSection.insertAdjacentElement('afterend', note);
                   }
-                } else {
-                  console.log('Showing AI section - AI is enabled');
-                  aiSection.style.display = 'block';
                 }
               }
               
@@ -2546,20 +2589,46 @@
     function submitDemographics() {
       const form = document.getElementById('demographicsForm');
       
+      // Debug: Check what's selected
+      console.log('Selected buttons:', document.querySelectorAll('.button-option.selected'));
+      
+      // Collect each field with detailed logging
+      const ageBand = document.querySelector('.button-option[data-name="ageBand"].selected')?.dataset.value || '';
+      const gender = document.querySelector('.button-option[data-name="gender"].selected')?.dataset.value || '';
+      const qualification = document.querySelector('.button-option[data-name="qualification"].selected')?.dataset.value || '';
+      const discipline = document.querySelector('.button-option[data-name="discipline"].selected')?.dataset.value || '';
+      const englishProficiency = document.querySelector('.button-option[data-name="englishProficiency"].selected')?.dataset.value || '';
+      const codingExperience = document.querySelector('.button-option[data-name="codingExperience"].selected')?.dataset.value || '';
+      const llmUsage = document.querySelector('.button-option[data-name="llmUsage"].selected')?.dataset.value || '';
+      const occupation = document.querySelector('.button-option[data-name="military"].selected')?.dataset.value || '';
+      
+      // Log each value
+      console.log('Demographics values:');
+      console.log('- ageBand:', ageBand);
+      console.log('- gender:', gender);
+      console.log('- qualification:', qualification);
+      console.log('- discipline:', discipline);
+      console.log('- englishProficiency:', englishProficiency);
+      console.log('- codingExperience:', codingExperience);
+      console.log('- llmUsage:', llmUsage);
+      console.log('- occupation:', occupation);
+      
       // Collect data from button selections
       const demographics = {
         participantId: sessionData.participantId,
         timestamp: new Date().toISOString(),
-        ageBand: document.querySelector('.button-option[data-name="ageBand"].selected')?.dataset.value || '',
-        gender: document.querySelector('.button-option[data-name="gender"].selected')?.dataset.value || '',
-        qualification: document.querySelector('.button-option[data-name="qualification"].selected')?.dataset.value || '',
-        discipline: document.querySelector('.button-option[data-name="discipline"].selected')?.dataset.value || '',
-        englishProficiency: document.querySelector('.button-option[data-name="englishProficiency"].selected')?.dataset.value || '',
-        codingExperience: document.querySelector('.button-option[data-name="codingExperience"].selected')?.dataset.value || '',
-        llmUsage: document.querySelector('.button-option[data-name="llmUsage"].selected')?.dataset.value || '',
-        military: document.querySelector('.button-option[data-name="military"].selected')?.dataset.value || '',
+        ageBand: ageBand,
+        gender: gender,
+        qualification: qualification,
+        discipline: discipline,
+        englishProficiency: englishProficiency,
+        codingExperience: codingExperience,
+        llmUsage: llmUsage,
+        occupation: occupation,
         consentGiven: document.getElementById('consent')?.checked || false
       };
+      
+      console.log('Full demographics object:', demographics);
       
       // Save to server
       google.script.run
