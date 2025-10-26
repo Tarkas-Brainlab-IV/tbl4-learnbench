@@ -2,6 +2,18 @@
 // Reduces sheet reads and improves performance
 
 /**
+ * Fisher-Yates shuffle algorithm for randomizing arrays
+ */
+function shuffleArray(array) {
+  const shuffled = [...array]; // Create a copy
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
+/**
  * Cache Manager - Handles all caching operations
  */
 const CacheManager = {

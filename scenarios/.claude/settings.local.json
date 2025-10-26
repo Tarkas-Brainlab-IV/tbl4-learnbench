@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python:*)",
+      "Bash(npm run push:*)",
+      "Bash(npm run setup:*)",
+      "Bash(clasp push:*)",
+      "Bash(npm run deploy:*)",
+      "Bash(clasp deploy:*)",
+      "Bash(clasp:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

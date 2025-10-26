@@ -1,6 +1,11 @@
 // Main entry point for the web app
 function doGet(e) {
   try {
+    // Check for test endpoint
+    if (e.parameter.action === 'testRandomization') {
+      return handleTestRandomization();
+    }
+    
     // Check if this is demographics page request
     if (e.parameter.page === 'demographics') {
       return HtmlService.createHtmlOutputFromFile('demographics-form')

@@ -1,0 +1,403 @@
+"""
+Generate a revised LearnBench scenario CSV (S016–S030) where:
+- Any scenario that "uses sample text" places that sample text in the second pane (ImageURL column),
+  which the user's platform can render as text as well as images.
+- All prompts avoid JSON (CSV-only or plain text).
+- Options are similar length to reduce "longer = correct" cues.
+- One-shot and few-shot items are nuanced, with clearly better choices for trained eyes.
+- Two image-friendly scenarios (S025, S026) keep placeholders for image URLs.
+
+The output file is saved to /mnt/data/learnbench_scenarios_rev2_S016_S030.csv
+"""
+import pandas as pd
+from textwrap import dedent
+
+cols = [
+    "ScenarioID","ScenarioText","ImageURL",
+    "Option1","Score1","Option2","Score2","Option3","Score3","Option4","Score4","Option5","Score5"
+]
+
+rows = []
+
+def add_row(id, text, second_pane, options_scores):
+    """Append a scenario row with text in the main pane, and sample text (or image URL) in the second pane."""
+    row = {c:"" for c in cols}
+    row["ScenarioID"] = id
+    row["ScenarioText"] = dedent(text).strip()
+    row["ImageURL"] = dedent(second_pane).strip()
+    for i,(opt,score) in enumerate(options_scores, start=1):
+        row[f"Option{i}"] = opt
+        row[f"Score{i}"] = score
+    rows.append(row)
+
+# S016 — Zero-shot: CSV-only extraction instruction with messy sample text in second pane
+add_row(
+    "S016",
+    """
+    # Zero-shot Prompt: CSV-only extraction
+    
+    You will paste messy text listing people and needs. You want **CSV only** back.
+    **Which instruction is best?**
+    """,
+    """
+    ### Sample text (for reference in this pane)
+    - Contact: Aliya (HP: 9123-4567) needs 5 blankets; also baby milk
+    - Mr. Tan tel 81234567 asks for 2 boxes water @ Hall A
+    - 'Ravi'  +65 9012 8888  requests insulin pens x3    @ Block 12
+    - Mei (no phone) needs wheelchair and 1 ramp kit
+    """,
+    [
+        ("Extract requests and return CSV only with header `name,phone,item,qty`. Use digits for phone; leave blank if unknown.", 10),
+        ("Summarise requests in a short list; include names and items.", 3),
+        ("Turn the text into a table with any columns you think fit.", 4),
+        ("Extract requests and return a markdown table with totals.", 5),
+    ]
+)
+
+# S017 — Zero-shot: CSV delimiters; place small CSV in second pane
+add_row(
+    "S017",
+    """
+    # Zero-shot Prompt: Delimiters and clear output
+    
+    You will paste a CSV between triple backticks. You want **total revenue by region** (`qty*unit_price`) and **CSV-only** output.
+    **Choose the best instruction.**
+    """,
+    """
+    ### Sample CSV (appears here in the second pane)
+    ```
+    order_id,region,item,qty,unit_price
+    1,North,Water,10,3
+    2,East,Food,5,10
+    3,North,Medicine,4,20
+    4,South,Water,6,3
+    5,East,Food,5,10
+    ```
+    """,
+    [
+        ("Data appears below. Compute total revenue by region (qty*unit_price). Return CSV only: `region,total_revenue`, sorted high to low. Treat blank qty as 0. Data: ```<CSV here>```", 10),
+        ("Analyse the CSV and list revenue by region in your own words.", 2),
+        ("Group the CSV by region and output a table.", 5),
+        ("Compute revenue by region and show a chart image.", 3),
+    ]
+)
+
+# S018 — Zero-shot: stepwise but concise (no sample text needed)
+add_row(
+    "S018",
+    """
+    # Zero-shot Prompt: Careful but concise
+    
+    You want careful calculation but a short final output.
+    **Which instruction is best?**
+    """,
+    "",
+    [
+        ("Work step by step internally, then reply only `Final: <answer>`.", 10),
+        ("Think step by step and display all working.", 4),
+        ("Be careful and give a precise answer.", 5),
+        ("Give the final answer without steps.", 6),
+    ]
+)
+
+# S019 — One-shot: numeric pattern; provide "new lines" in second pane
+add_row(
+    "S019",
+    """
+    # One-shot Prompt: Apply a numeric pattern
+    
+    **Example**  
+    Input: `Order total: qty=3, price=12.50` → Output: `37.50`
+    
+    You will paste new lines in the same style. Pick the best instruction.
+    """,
+    """
+    ### New lines (sample text for this pane)
+    - Order total: qty=4, price=7.25
+    - Order total: qty=1, price=19.90
+    - Order total: qty=12, price=2.00
+    """,
+    [
+        ("Using the example, when I paste new lines, extract qty and price, compute qty*price, and return only the number with two decimals.", 10),
+        ("Given the example, calculate totals for new inputs and explain your steps.", 6),
+        ("Follow the example and reply with the result number.", 7),
+        ("When I paste text, multiply the numbers you find and answer.", 5),
+    ]
+)
+
+# S020 — One-shot: classification; provide new messages in second pane
+add_row(
+    "S020",
+    """
+    # One-shot Prompt: Two-class classification
+    
+    **Example**  
+    `Need insulin now at Block 12` → `URGENT`
+    
+    For any new message I paste, classify as `URGENT` or `NOT URGENT`. Choose the best prompt.
+    """,
+    """
+    ### New messages (sample text for this pane)
+    - Looking for baby formula at Hall C
+    - Man fainted on bus at Gate 5
+    - Spare tarps needed before tonight's rain
+    """,
+    [
+        ("Using the single example, infer the rule and return only `URGENT` or `NOT URGENT` for each new message.", 10),
+        ("Decide urgency and explain why in one sentence.", 6),
+        ("Classify messages as urgent or not; include reasons.", 5),
+        ("Tell me if it seems important.", 3),
+    ]
+)
+
+# S021 — Few-shot: classification; include two examples in main, new messages in second pane
+add_row(
+    "S021",
+    """
+    # Few-shot Prompt: Two examples, one label
+    
+    **Examples**  
+    1. `Any spare blankets for Hall B?` → `LOW`  
+    2. `Elderly man collapsed at Gate 3` → `HIGH`
+    
+    Choose the best instruction to classify a new message as `HIGH` or `LOW` with a one-word label.
+    """,
+    """
+    ### New messages (sample text for this pane)
+    - Child with high fever at Shelter A
+    - Need extra power strips for charging phones
+    - Looking for pet food for two cats
+    """,
+    [
+        ("Using the examples, infer the rule and return only `HIGH` or `LOW` for each new message.", 10),
+        ("Classify the message; include a brief reason.", 6),
+        ("Rate the message as high or low urgency and explain your rating.", 5),
+        ("Sort messages by severity in a paragraph.", 2),
+    ]
+)
+
+# S022 — Few-shot: transform; provide identifiers in second pane
+add_row(
+    "S022",
+    """
+    # Few-shot Prompt: Text transform from examples
+    
+    **Examples**  
+    `main_street_shelter` → `Main Street Shelter`  
+    `old_town_hall` → `Old Town Hall`
+    
+    You will paste new identifiers. Choose the best instruction.
+    """,
+    """
+    ### New identifiers (sample text for this pane)
+    - east_side_school
+    - river_view_center
+    - block_12_medical
+    """,
+    [
+        ("Using the examples, convert new identifiers from snake_case to Title Case with spaces. Return only the transformed string.", 10),
+        ("Convert names to a nice format and explain your steps.", 4),
+        ("Title case any text I paste and also keep underscores.", 2),
+        ("Make the text look proper; include before/after.", 5),
+    ]
+)
+
+# S023 — CSV baseline: move dataset to second pane and ensure unique answer
+add_row(
+    "S023",
+    """
+    # CSV (Baseline): Item with highest total quantity
+    
+    **Question:** Which **item** has the highest total **qty**?
+    """,
+    """
+    ### Dataset (second pane)
+    ```
+    order_id,region,item,qty,unit_price
+    1,North,Water,8,3
+    2,East,Food,6,10
+    3,West,Medicine,2,30
+    4,North,Food,8,10
+    5,South,Water,5,3
+    ```
+    """,
+    [
+        ("Food", 10),
+        ("Water", 7),
+        ("Medicine", 3),
+        ("All tie", 0),
+    ]
+)
+
+# S024 — CSV baseline: move dataset to second pane
+add_row(
+    "S024",
+    """
+    # CSV (Baseline): Total revenue with rule
+    
+    **Treat blank qty as 0.**  
+    **Question:** What is the **total revenue**?
+    """,
+    """
+    ### Dataset (second pane)
+    ```
+    order_id,region,item,qty,unit_price
+    1,North,Water,10,3
+    2,North,Food,,10
+    3,East,Medicine,2,30
+    4,East,Water,5,3
+    5,South,Food,3,10
+    ```
+    """,
+    [
+        ("135", 10),
+        ("165", 5),
+        ("105", 2),
+        ("95", 0),
+    ]
+)
+
+# S025 — Image-based: heatmap; keep placeholder URL
+add_row(
+    "S025",
+    """
+    # Image-based: Which sector first?
+    
+    **The image in the second pane shows a heatmap** of three sectors (A, B, C) by injury severity (red=high, amber=medium, green=low).  
+    **Which sector should receive the first assessment team?**
+    """,
+    "REPLACE_WITH_HEATMAP_IMAGE_URL",
+    [
+        ("Sector with the **red** hotspot (A)", 10),
+        ("Sector with the **amber** hotspot (B)", 6),
+        ("Sector with the **green** zone (C)", 3),
+        ("Delay deployment for more data", 1),
+    ]
+)
+
+# S026 — Image-based: bar chart; keep placeholder URL
+add_row(
+    "S026",
+    """
+    # Image-based: Send one truck
+    
+    **The image in the second pane shows a bar chart** for three shelters (X, Y, Z): *people waiting* vs *stock on hand*. One truck carries 100 kits.  
+    **Where do you send the truck first?**
+    """,
+    "REPLACE_WITH_BARCHART_IMAGE_URL",
+    [
+        ("Shelter with the largest **gap** (people minus stock)", 10),
+        ("Shelter with the most people, ignoring stock", 6),
+        ("Shelter closest to the depot", 3),
+        ("Hold the truck for later", 1),
+    ]
+)
+
+# S027 — One-shot prompt: CSV grouping; provide a sample CSV to anchor
+add_row(
+    "S027",
+    """
+    # One-shot Prompt: Grouping a pasted CSV
+    
+    **Example**  
+    Input CSV → Output CSV  
+    `region,item,qty` → `region,total_qty`
+    
+    You will paste a small CSV next. Choose the best instruction.
+    """,
+    """
+    ### Sample CSV (second pane)
+    ```
+    region,item,qty
+    North,Water,4
+    East,Food,2
+    North,Food,3
+    South,Water,5
+    ```
+    """,
+    [
+        ("Using the example, when I paste a CSV, sum qty by region and return CSV only with header `region,total_qty`, sorted high to low.", 10),
+        ("Sum the data and give me the results.", 5),
+        ("Group by region, total qty, and show a neat table.", 6),
+        ("Add up quantities per region and explain the steps.", 4),
+    ]
+)
+
+# S028 — Few-shot prompt: From two labelled examples; include a new input CSV
+add_row(
+    "S028",
+    """
+    # Few-shot Prompt: From two labelled examples
+    
+    **Examples**  
+    Input: `region,item,qty` → Output: `region,total_qty`  
+    Input: `area,thing,count` → Output: `area,total_count`
+    
+    You will paste a small CSV next. Choose the best instruction.
+    """,
+    """
+    ### New CSV (second pane)
+    ```
+    zone,product,amount
+    A,Food,3
+    B,Water,5
+    A,Water,2
+    ```
+    """,
+    [
+        ("Using the examples, infer the rule and return CSV only that groups by the first column and sums the numeric field; header `<first,total_<name>>`.", 10),
+        ("Do the grouping and also describe what you did.", 5),
+        ("Make a summary and include any columns you like.", 3),
+        ("Group rows and output a markdown table.", 6),
+    ]
+)
+
+# S029 — Few-shot classification; include boundary-case messages
+add_row(
+    "S029",
+    """
+    # Few-shot Prompt: Boundary-aware classification
+    
+    **Examples**  
+    `Need oxygen now at Ward C` → `URGENT`  
+    `Looking for extra tarps for Hall A` → `NOT URGENT`
+    
+    For new messages, classify as `URGENT` or `NOT URGENT`. Prefer life-threatening cases. Choose the best instruction.
+    """,
+    """
+    ### New messages (second pane)
+    - Diabetic patient out of insulin by tonight
+    - Water delivery delayed by two hours
+    - Elderly woman dizzy after standing in queue
+    """,
+    [
+        ("Using the examples, infer the rule and return only `URGENT` or `NOT URGENT`. If unclear, choose conservatively toward `URGENT`.", 10),
+        ("Classify messages and justify your choice briefly.", 6),
+        ("Rate messages on a 1–5 urgency scale and explain.", 3),
+        ("Sort messages by topic (medical, shelter, other).", 2),
+    ]
+)
+
+# S030 — Manipulation check; no sample text
+add_row(
+    "S030",
+    """
+    # Quick Behaviour Check
+    
+    In the last AI-enabled scenarios, which **best** describes what you did?
+    """,
+    "",
+    [
+        ("Asked the AI to verify or explain a result.", 0),
+        ("Challenged an AI suggestion or requested an alternative.", 0),
+        ("Planned roles (AI computes; I verify and decide).", 0),
+        ("None of these.", 0),
+    ]
+)
+
+df = pd.DataFrame(rows, columns=cols)
+out_path = "/mnt/data/learnbench_scenarios_rev2_S016_S030.csv"
+df.to_csv(out_path, index=False)
+
+out_path
+

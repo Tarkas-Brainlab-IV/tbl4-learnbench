@@ -258,14 +258,99 @@
     
     .scenario-image.placeholder {
       width: 100%;
-      height: 300px;
+      min-height: 300px;
       background: var(--bg-secondary);
       border: 2px dashed var(--border-color);
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: center;
       color: var(--text-muted);
       font-size: 14px;
+      overflow: auto;
+    }
+    
+    /* Markdown styles for second pane content */
+    #imagePlaceholder > div {
+      width: 100%;
+    }
+    
+    #imagePlaceholder h1,
+    #imagePlaceholder h2,
+    #imagePlaceholder h3 {
+      color: var(--text-primary);
+      margin-top: 0;
+      margin-bottom: 0.5em;
+    }
+    
+    #imagePlaceholder h1 { font-size: 1.5em; }
+    #imagePlaceholder h2 { font-size: 1.3em; }
+    #imagePlaceholder h3 { font-size: 1.1em; }
+    
+    #imagePlaceholder p {
+      margin: 0.5em 0;
+      line-height: 1.6;
+    }
+    
+    #imagePlaceholder ul,
+    #imagePlaceholder ol {
+      margin: 0.5em 0;
+      padding-left: 1.5em;
+    }
+    
+    #imagePlaceholder li {
+      margin: 0.25em 0;
+      line-height: 1.6;
+    }
+    
+    #imagePlaceholder code {
+      background: var(--bg-primary);
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 0.9em;
+    }
+    
+    #imagePlaceholder pre {
+      background: var(--bg-primary);
+      padding: 12px;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin: 1em 0;
+    }
+    
+    #imagePlaceholder pre code {
+      background: none;
+      padding: 0;
+    }
+    
+    #imagePlaceholder blockquote {
+      border-left: 3px solid var(--button-primary);
+      padding-left: 1em;
+      margin: 1em 0;
+      color: var(--text-secondary);
+    }
+    
+    #imagePlaceholder table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1em 0;
+    }
+    
+    #imagePlaceholder table th,
+    #imagePlaceholder table td {
+      border: 1px solid var(--border-color);
+      padding: 8px 12px;
+      text-align: left;
+    }
+    
+    #imagePlaceholder table th {
+      background: var(--bg-primary);
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    
+    #imagePlaceholder table tr:nth-child(even) {
+      background: var(--bg-primary);
     }
     
     .response-options {
@@ -1747,10 +1832,33 @@
       const placeholder = document.getElementById('imagePlaceholder');
       
       if (isImageUrlText) {
-        // Image field contains text - display as text in the image area
+        // Image field contains text - render as Markdown in the image area
         img.style.display = 'none';
         placeholder.style.display = 'flex';
-        placeholder.innerHTML = `<div style="padding: 20px; text-align: center; color: var(--text-primary);">${scenario.imageUrl}</div>`;
+        
+        // Render as Markdown if enabled and marked is available
+        if (CONFIG.ENABLE_MARKDOWN && typeof marked !== 'undefined' && scenario.imageUrl) {
+          marked.setOptions({
+            breaks: true,
+            gfm: true,  // Enable GitHub Flavored Markdown (includes tables)
+            tables: true,
+            headerIds: false,
+            mangle: false,
+            sanitize: false
+          });
+          
+          try {
+            const parsedHtml = marked.parse(scenario.imageUrl);
+            placeholder.innerHTML = `<div style="padding: 20px; text-align: left; color: var(--text-primary); width: 100%;">${parsedHtml}</div>`;
+            console.log('Markdown rendered in second pane');
+          } catch (e) {
+            console.error('Markdown parse error in second pane:', e);
+            placeholder.innerHTML = `<div style="padding: 20px; text-align: left; color: var(--text-primary);">${scenario.imageUrl}</div>`;
+          }
+        } else {
+          // Fallback to plain text
+          placeholder.innerHTML = `<div style="padding: 20px; text-align: left; color: var(--text-primary);">${scenario.imageUrl}</div>`;
+        }
       } else if (scenario.imageUrl && scenario.imageUrl !== '') {
         // Regular image URL
         img.src = scenario.imageUrl;
