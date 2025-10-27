@@ -1811,7 +1811,13 @@
       
       // Check if imageUrl field contains text, URL to text, or URL to image
       const isImageUrlLink = scenario.imageUrl && (scenario.imageUrl.startsWith('http://') || scenario.imageUrl.startsWith('https://'));
-      const isImageFile = isImageUrlLink && scenario.imageUrl.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i);
+      // Detect image files by extension or common image URL patterns
+      const isImageFile = isImageUrlLink && (
+        scenario.imageUrl.match(/\.(jpg|jpeg|png|gif|webp|svg|bmp|ico)(\?|$)/i) ||
+        scenario.imageUrl.includes('placeholder.com') ||
+        scenario.imageUrl.includes('unsplash.com') ||
+        scenario.imageUrl.includes('imgur.com')
+      );
       const isImageUrlText = scenario.imageUrl && !isImageUrlLink;
       const isTextUrl = isImageUrlLink && !isImageFile;
       
