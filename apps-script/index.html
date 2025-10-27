@@ -1991,23 +1991,30 @@
           document.querySelectorAll('.response-option').forEach(btn => {
             btn.classList.remove('selected');
           });
-          
+
           // Mark as selected
           this.classList.add('selected');
-          
+
           // Store selection
           sessionData.scenarioResponse = {
             optionId: option.id,
             text: option.text,
             score: option.score
           };
-          
+
+          // Insert prompt into AI editor (if AI is enabled and editor exists)
+          if (CONFIG.ENABLE_AI !== false && editor) {
+            editor.setValue(option.text);
+            editor.focus();
+            console.log('Inserted prompt into AI editor:', option.text.substring(0, 50) + '...');
+          }
+
           // Enable submit button
           document.getElementById('submitResponse').disabled = false;
-          
+
           // Show status
           const status = document.getElementById('responseStatus');
-          status.textContent = 'Response selected. You can continue to explore with AI or submit when ready.';
+          status.textContent = 'Response selected. Prompt inserted into AI editor - you can edit and submit.';
           status.style.display = 'block';
           status.style.color = ''; // Reset color
         });
