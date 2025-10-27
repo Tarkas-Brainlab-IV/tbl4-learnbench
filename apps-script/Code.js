@@ -1484,7 +1484,7 @@ function setAllowOutOfClass(allowed) {
 }
 
 // Function to save scenario response with duplicate prevention
-function saveScenarioResponse(participantId, scenarioId, response) {
+function saveScenarioResponse(participantId, scenarioId, response, cohortId) {
   try {
     const sheet = getOrCreateSheet();
     const ss = sheet.getParent();
@@ -1494,9 +1494,10 @@ function saveScenarioResponse(participantId, scenarioId, response) {
     
     if (!responsesSheet) {
       responsesSheet = ss.insertSheet('Scenario_Responses');
-      // Add headers with submission ID
-      responsesSheet.getRange(1, 1, 1, 7).setValues([[
+      // Add headers with cohort ID and submission ID
+      responsesSheet.getRange(1, 1, 1, 8).setValues([[
         'Participant ID',
+        'Cohort ID',
         'Scenario ID',
         'Option Selected',
         'Response Text',
@@ -1504,7 +1505,18 @@ function saveScenarioResponse(participantId, scenarioId, response) {
         'Timestamp',
         'Submission ID'
       ]]);
-      responsesSheet.getRange(1, 1, 1, 7).setFontWeight('bold');
+      responsesSheet.getRange(1, 1, 1, 8).setFontWeight('bold');
+    } else {
+      // Auto-migration: Check if existing sheet needs Cohort ID column added
+      const headers = responsesSheet.getRange(1, 1, 1, responsesSheet.getLastColumn()).getValues()[0];
+      if (headers.length === 7 && headers[0] === 'Participant ID' && headers[1] === 'Scenario ID') {
+        // Old format without Cohort ID - insert it
+        console.log('Auto-migrating Scenario_Responses: inserting Cohort ID column');
+        responsesSheet.insertColumnBefore(2); // Insert after Participant ID
+        responsesSheet.getRange(1, 2).setValue('Cohort ID');
+        responsesSheet.getRange(1, 1, 1, 8).setFontWeight('bold');
+        console.log('Migration complete - Cohort ID column added');
+      }
     }
     
     // Check for recent duplicate (within last 5 seconds)
@@ -1512,26 +1524,32 @@ function saveScenarioResponse(participantId, scenarioId, response) {
     const now = new Date();
     
     // Check last 10 rows for duplicates
+    // Note: After migration, column indices change (Scenario ID moves from 1 to 2)
+    const headers = data[0];
+    const scenarioCol = headers.indexOf('Scenario ID');
+    const timestampCol = headers.indexOf('Timestamp');
+
     for (let i = Math.max(1, data.length - 10); i < data.length; i++) {
       if (i >= data.length) break;
       const row = data[i];
-      if (row[0] === participantId && row[1] === scenarioId) {
-        const rowTimestamp = new Date(row[5]);
+      if (row[0] === participantId && row[scenarioCol] === scenarioId) {
+        const rowTimestamp = new Date(row[timestampCol]);
         const timeDiff = (now - rowTimestamp) / 1000; // seconds
-        
+
         if (timeDiff < 5) {
           console.log('Duplicate submission detected within 5 seconds, ignoring');
           return { success: true, duplicate: true };
         }
       }
     }
-    
+
     // Generate unique submission ID
     const submissionId = Utilities.getUuid();
-    
-    // Append response with submission ID, force participant ID as string
+
+    // Append response with cohort ID and submission ID, force participant ID as string
     responsesSheet.appendRow([
       String(participantId), // Force string to prevent scientific notation
+      cohortId || 'default',  // Cohort ID (e.g., "2025-10-A-SS" or "default")
       scenarioId,
       response.optionId,
       response.text,
