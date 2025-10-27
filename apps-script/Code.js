@@ -565,12 +565,16 @@ function detectCohort(participantId) {
     };
   }
   
-  // Outside any scheduled time
+  // Outside any scheduled time - assign to monthly TEST cohort for tracking
+  // This prevents UNASSIGNED students and allows testing/makeup sessions
+  const testCohortId = generateMonthlyCohortId('TEST');
+  console.log('Outside scheduled hours - assigning to TEST cohort:', testCohortId);
+
   return {
-    cohort: 'UNASSIGNED',
+    cohort: testCohortId,
     inClass: false,
-    confidence: 0,
-    note: 'No active class session detected'
+    confidence: 0.2,
+    note: 'Outside scheduled hours - assigned to TEST cohort for this month'
   };
 }
 
