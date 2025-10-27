@@ -1809,12 +1809,11 @@
         scenario.text.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i)
       );
       
-      // Check if imageUrl field contains text (for A/B testing)
-      const isImageUrlText = scenario.imageUrl && !(
-        scenario.imageUrl.startsWith('http://') || 
-        scenario.imageUrl.startsWith('https://') ||
-        scenario.imageUrl.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i)
-      );
+      // Check if imageUrl field contains text, URL to text, or URL to image
+      const isImageUrlLink = scenario.imageUrl && (scenario.imageUrl.startsWith('http://') || scenario.imageUrl.startsWith('https://'));
+      const isImageFile = isImageUrlLink && scenario.imageUrl.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i);
+      const isImageUrlText = scenario.imageUrl && !isImageUrlLink;
+      const isTextUrl = isImageUrlLink && !isImageFile;
       
       // Set scenario content (text or image in text field)
       const scenarioTextEl = document.getElementById('scenarioText');
@@ -1874,8 +1873,84 @@
           }
         } else {
           // Fallback to plain text
-          placeholder.innerHTML = `<div style="padding: 20px; text-align: left; color: var(--text-primary);">${scenario.imageUrl}</div>`;
+          placeholder.innerHTML = `<div style="padding: 20px; text-align: left; color: var(--text-primary); max-height: 500px; overflow-y: auto; white-space: pre-wrap;">${scenario.imageUrl}</div>`;
         }
+      } else if (isTextUrl) {
+        // URL to text/CSV content - fetch and display
+        img.style.display = 'none';
+        placeholder.style.display = 'flex';
+        placeholder.innerHTML = '<div style="padding: 20px; color: var(--text-secondary);">Loading...</div>';
+
+        // Convert Google Docs URLs
+        var fetchUrl = scenario.imageUrl;
+        if (fetchUrl.includes('docs.google.com/document')) {
+          var docMatch = fetchUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
+          if (docMatch) {
+            fetchUrl = 'https://docs.google.com/document/d/' + docMatch[1] + '/export?format=txt';
+            console.log('Converting Google Docs URL');
+          }
+        }
+
+        // Fetch content
+        fetch(fetchUrl)
+          .then(function(resp) {
+            if (!resp.ok) throw new Error('HTTP ' + resp.status);
+            return resp.text();
+          })
+          .then(function(text) {
+            console.log('Fetched content, length:', text.length);
+
+            // Check for HTML
+            var lower = text.trim().toLowerCase();
+            if (lower.startsWith('<!doctype') || lower.startsWith('<html')) {
+              var errorDiv = document.createElement('div');
+              errorDiv.style.cssText = 'padding: 20px; color: var(--text-secondary);';
+              errorDiv.innerHTML = '⚠️ URL returned HTML. Try GitHub raw URLs.<br><br>' +
+                '<a href="' + scenario.imageUrl + '" target="_blank" style="color: var(--button-primary);">Open in tab</a>';
+              placeholder.innerHTML = '';
+              placeholder.appendChild(errorDiv);
+              return;
+            }
+
+            // Render markdown
+            if (typeof marked !== 'undefined') {
+              try {
+                marked.setOptions({ breaks: true, gfm: true, tables: true });
+                var html = marked.parse(text);
+                var contentDiv = document.createElement('div');
+                contentDiv.style.cssText = 'padding: 20px; color: var(--text-primary); max-height: 500px; overflow-y: auto;';
+                contentDiv.innerHTML = html;
+                placeholder.innerHTML = '';
+                placeholder.appendChild(contentDiv);
+              } catch (e) {
+                var textDiv = document.createElement('div');
+                textDiv.style.cssText = 'padding: 20px; max-height: 500px; overflow-y: auto; white-space: pre-wrap;';
+                textDiv.textContent = text;
+                placeholder.innerHTML = '';
+                placeholder.appendChild(textDiv);
+              }
+            } else {
+              var textDiv = document.createElement('div');
+              textDiv.style.cssText = 'padding: 20px; max-height: 500px; overflow-y: auto; white-space: pre-wrap;';
+              textDiv.textContent = text;
+              placeholder.innerHTML = '';
+              placeholder.appendChild(textDiv);
+            }
+          })
+          .catch(function(err) {
+            console.error('Fetch error:', err);
+            var errorDiv = document.createElement('div');
+            errorDiv.style.cssText = 'padding: 20px; color: var(--text-secondary);';
+            errorDiv.textContent = 'Failed to load. ';
+            var link = document.createElement('a');
+            link.href = scenario.imageUrl;
+            link.target = '_blank';
+            link.style.color = 'var(--button-primary)';
+            link.textContent = 'Open in tab';
+            errorDiv.appendChild(link);
+            placeholder.innerHTML = '';
+            placeholder.appendChild(errorDiv);
+          });
       } else if (scenario.imageUrl && scenario.imageUrl !== '') {
         // Regular image URL
         img.src = scenario.imageUrl;
@@ -1886,12 +1961,12 @@
         img.onerror = function() {
           img.style.display = 'none';
           placeholder.style.display = 'flex';
-          placeholder.innerHTML = '<span style="color: #666;">No image</span>';
+          placeholder.innerHTML = '<span style="color: #666;">Image failed to load</span>';
         };
       } else {
         img.style.display = 'none';
         placeholder.style.display = 'flex';
-        placeholder.innerHTML = '<span style="color: #666;">No image</span>';
+        placeholder.innerHTML = '<span style="color: #666;">No content</span>';
       }
       
       // Create response option buttons
