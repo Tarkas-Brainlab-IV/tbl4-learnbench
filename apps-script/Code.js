@@ -89,6 +89,29 @@ function getClientConfig() {
   };
 }
 
+// Client-accessible function to get participant's cohort assignment
+function getParticipantCohort(participantId) {
+  try {
+    console.log('getParticipantCohort called for:', participantId);
+    const cohortInfo = detectCohort(participantId);
+    console.log('Cohort detected:', cohortInfo);
+
+    return {
+      success: true,
+      cohort: cohortInfo.cohort,
+      inClass: cohortInfo.inClass,
+      note: cohortInfo.note
+    };
+  } catch (error) {
+    console.error('Error detecting cohort:', error);
+    return {
+      success: false,
+      cohort: 'ERROR',
+      error: error.toString()
+    };
+  }
+}
+
 // Test demographics saving with sample data
 function testDemographicsSaving() {
   const testData = {
