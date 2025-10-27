@@ -1666,29 +1666,46 @@
       sessionData.totalTokensUsed = 0;  // Initialize token counter
       sessionData.scenarioId = null;  // Track current scenario
       sessionData.scenarioResponse = null;  // Track selected response
-      
+
+      // Get cohort assignment (runs in background, doesn't block login)
+      google.script.run
+        .withSuccessHandler((cohortResult) => {
+          if (cohortResult && cohortResult.success) {
+            sessionData.cohortId = cohortResult.cohort;
+            console.log('Cohort assigned:', cohortResult.cohort, '- In class:', cohortResult.inClass);
+          } else {
+            console.warn('Cohort detection failed, using default');
+            sessionData.cohortId = 'default';
+          }
+        })
+        .withFailureHandler((error) => {
+          console.error('Failed to get cohort:', error);
+          sessionData.cohortId = 'default';
+        })
+        .getParticipantCohort(result.hash);
+
       // Check if demographics were already collected
       const demographicsCollected = localStorage.getItem('demographicsCollected_' + sessionData.participantId);
       const demographicsSkipped = localStorage.getItem('demographicsSkipped_' + sessionData.participantId);
-      
+
       if (demographicsCollected === 'true') {
         sessionData.demographicsCollected = true;
       }
       if (demographicsSkipped === 'true') {
         sessionData.demographicsSkipped = true;
       }
-      
+
       // Store in session storage for demographics page
       sessionStorage.setItem('participantId', result.hash);
-      
+
       // Hide login screen
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('mainInterface').style.display = 'block';
       document.getElementById('headerBar').style.display = 'flex';  // Show header bar
-      
+
       // Show session info
       document.getElementById('sessionInfo').textContent = `Session: ${sessionData.participantId}`;
-      
+
       // Initialize main interface
       initializeMainInterface();
     }
