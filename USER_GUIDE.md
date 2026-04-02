@@ -1,14 +1,14 @@
 # Participant User Guide
 
-## Welcome to PromptLab! 👋
+## Welcome to LearnBench! 👋
 
-This guide will help you navigate through the experiment interface.
+This guide will help you navigate the interface.
 
 ## Getting Started
 
 ### Step 1: Access the System
 1. Click the link provided by your instructor
-2. You'll see the PromptLab login screen
+2. You'll see the LearnBench login screen
 3. If you see an error, try opening in an incognito/private browser window
 
 ### Step 2: Login
@@ -90,7 +90,7 @@ After completing 3 prompts, you'll see a demographics form:
 - Coding experience
 - AI/LLM usage frequency
 
-**Note**: You can skip optional fields, but providing them helps our research.
+**Note**: You can skip optional fields, but providing them helps us improve the platform.
 
 ## Exit Survey (Final Step)
 
@@ -103,7 +103,7 @@ After all scenarios, you'll see a brief survey about your experience:
 4. **Overall Experience**: Rate your overall experience
 
 ### Comments (Optional)
-Share any feedback about the system or experiment.
+Share any feedback about the system or your session.
 
 ## Tips for Success
 
@@ -168,14 +168,13 @@ Share any feedback about the system or experiment.
 - Other website activity
 
 ### Data Usage
-- Research purposes only
+- Used to improve the learning platform
 - Anonymized for analysis
 - Not shared with third parties
-- Deleted after study completion
 
 ## Need Help?
 
-### During the Experiment
+### During the Session
 1. Raise your hand (if in class)
 2. Use the chat feature (if available)
 3. Note the issue and continue if possible
@@ -185,8 +184,7 @@ Share any feedback about the system or experiment.
 - Note your participant ID
 - Contact your instructor
 
-### After the Experiment
-- Your instructor will provide debriefing
+### After the Session
 - Results available upon request
 - Feedback welcome via instructor
 
@@ -199,19 +197,19 @@ A: Typically 15-30 minutes depending on scenarios
 A: Yes, but stay on the same page. Don't close the browser.
 
 **Q: Is there a right answer?**
-A: No! We're studying how people interact with AI, not grading responses.
+A: No! The goal is to practice and develop your prompting skills, not to grade responses.
 
 **Q: Can I go back to previous scenarios?**
 A: No, the system is designed to move forward only.
 
 **Q: Will my responses be graded?**
-A: No, this is for research, not assessment.
+A: No, this is for learning, not assessment.
 
 **Q: Can I see others' responses?**
 A: No, all responses are private and anonymized.
 
 **Q: What if I make a mistake?**
-A: That's okay! Natural interactions help our research.
+A: That's okay! Mistakes are part of the learning process.
 
 ## Quick Checklist
 
@@ -222,7 +220,7 @@ Before starting:
 - [ ] Using Chrome/Firefox/Safari
 - [ ] Not using Internet Explorer
 
-During the experiment:
+During the session:
 - [ ] Read each scenario carefully
 - [ ] Submit thoughtful prompts
 - [ ] Complete demographics (if shown)
@@ -231,7 +229,7 @@ During the experiment:
 
 ## Thank You!
 
-Your participation helps advance research in human-AI collaboration. We appreciate your time and thoughtful responses!
+Your participation helps you build practical human-AI teaming skills. We appreciate your time and thoughtful responses!
 
 ---
 

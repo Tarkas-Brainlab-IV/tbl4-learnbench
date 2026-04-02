@@ -1,4 +1,4 @@
-# PromptLab Setup Instructions
+# LearnBench Setup Instructions
 
 ## ⚠️ Important: Run Setup First!
 

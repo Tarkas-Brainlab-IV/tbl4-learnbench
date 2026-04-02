@@ -102,7 +102,7 @@ const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-
 
 - **Gemini Pro**: 60 requests per minute
 - **Gemini 1.5 Flash**: 15 requests per minute
-- Both have generous daily quotas for experiments
+- Both have generous daily quotas for classroom use
 
 ## Troubleshooting
 

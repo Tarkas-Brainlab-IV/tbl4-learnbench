@@ -2,14 +2,14 @@
 
 > **Now 3-5x faster, 10x more stable, with enterprise-grade monitoring and error recovery**
 
-A high-performance web-based platform for conducting human-AI teaming experiments using Google Apps Script and the Gemini API.
+A high-performance web-based platform for practicing AI prompting and developing human-AI teaming skills through structured exercises, built on Google Apps Script and the Gemini API.
 
 ## 🎯 Key Features
 
 ### Core Capabilities
 - **Multimodal AI Processing**: Text and image prompts via Gemini 1.5
 - **Real-time Response Display**: Instant AI feedback with syntax highlighting
-- **Scenario-Based Experiments**: Configurable workflows and conditions
+- **Scenario-Based Exercises**: Configurable workflows and conditions
 - **Comprehensive Data Logging**: All interactions tracked in Google Sheets
 - **Demographics Collection**: Optional participant information gathering
 - **Exit Surveys**: NASA-TLX style workload assessment
@@ -198,7 +198,7 @@ Real-time tracking includes:
 ## 📁 Project Structure
 
 ```
-nerv-learnbench/
+tbl4-learnbench/
 ├── apps-script/
 │   ├── Code-refactored.js      # Main application (v2.0)
 │   ├── config-manager.js       # Configuration management
@@ -300,7 +300,7 @@ Access real-time metrics in your spreadsheet:
 - [Developer Guide](DEVELOPER_GUIDE.md) - Quick reference for developers
 - [Setup Instructions](SETUP_INSTRUCTIONS.md) - Detailed setup guide
 - [Troubleshooting Guide](TROUBLESHOOTING.md) - Common issues and solutions
-- [Instructor Guide](INSTRUCTOR_GUIDE.md) - Running experiments
+- [Instructor Guide](INSTRUCTOR_GUIDE.md) - Running sessions
 
 ## 🆘 Support
 

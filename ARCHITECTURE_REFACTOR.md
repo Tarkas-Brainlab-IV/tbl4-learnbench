@@ -1,4 +1,4 @@
-# PromptLab Architecture Refactor Documentation
+# LearnBench Architecture Refactor Documentation
 
 ## Table of Contents
 1. [Overview](#overview)
@@ -13,7 +13,7 @@
 
 ## Overview
 
-This document describes the comprehensive refactoring of the PromptLab Google Apps Script codebase completed on [Date]. The refactor addresses critical stability issues, race conditions, and performance bottlenecks while introducing a modular, testable architecture.
+This document describes the comprehensive refactoring of the LearnBench Google Apps Script codebase completed on [Date]. The refactor addresses critical stability issues, race conditions, and performance bottlenecks while introducing a modular, testable architecture.
 
 ### Key Achievements
 - ✅ Eliminated race conditions in sheet creation

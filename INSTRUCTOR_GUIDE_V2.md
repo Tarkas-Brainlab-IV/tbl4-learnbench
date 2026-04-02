@@ -2,7 +2,7 @@
 
 ## System Overview
 
-PromptLab v2.0 is a high-performance research platform for studying human-AI interaction. The system now handles 100+ concurrent participants with 3-5x faster response times.
+LearnBench v2.0 is a high-performance platform for practicing AI prompting and developing human-AI teaming skills. The system handles 100+ concurrent users with 3-5x faster response times.
 
 ## Quick Start for Instructors
 

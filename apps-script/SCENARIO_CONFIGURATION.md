@@ -15,7 +15,7 @@ testScenarioSystem()
 
 ## 2. Configure the Setup Sheet
 
-The Setup sheet controls all experiment behavior. After running `ensureSetupSheet()`, you'll have a sheet with these settings:
+The Setup sheet controls all session behavior. After running `ensureSetupSheet()`, you'll have a sheet with these settings:
 
 | Setting | Column B Value | Description |
 |---------|---------------|-------------|

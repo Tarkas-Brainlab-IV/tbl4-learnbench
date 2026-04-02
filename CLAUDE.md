@@ -4,10 +4,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-LearnBench is a web-based human-AI collaboration experiment platform that uses Google Apps Script and the Gemini API for conducting prompting experiments. Data is stored in Google Sheets and the application runs as a Google Apps Script Web App.
+LearnBench is a web-based platform for practicing AI prompting and developing human-AI teaming skills through structured exercises. Built on Google Apps Script and the Gemini API, with data stored in Google Sheets.
 
 Key features:
-- Scenario-based experiments with MCQ (Multiple Choice Questions)
+- Scenario-based exercises with MCQ (Multiple Choice Questions)
 - MCQ randomization using Fisher-Yates shuffle algorithm
 - Multimodal prompts (text + images) via Gemini 1.5
 - Demographics collection and exit surveys
@@ -46,7 +46,7 @@ The application follows a modular architecture with:
 - **Data Layer**: Google Sheets operations through `sheet-manager.js` with LockService to prevent race conditions
 - **Caching Layer**: Multi-level caching system in `cache-manager.js` (Script, User, Document caches with different TTLs)
 - **Configuration**: Stored in Google Sheets "Setup" tab, cached for performance (1-hour TTL)
-- **Scenarios**: CSV files in `/scenarios/` directory define experiment scenarios with MCQ options
+- **Scenarios**: CSV files in `/scenarios/` directory define exercise scenarios with MCQ options
 - **Testing**: Custom test framework in `test-framework.js` with separate test files for core, integration, and demographics
 
 ### Critical Development Patterns
@@ -104,12 +104,12 @@ Run tests locally first (`npm test`), then in GAS environment (`npm run test:gas
 - **Main Logic**: `/apps-script/Code.js` - Application entry point with `doGet()` handler, participant hash generation
 - **Caching**: `/apps-script/cache-manager.js` - CacheManager with `shuffleArray()`, multi-level caching
 - **Sheets**: `/apps-script/sheet-manager.js` - All Google Sheets operations with LockService
-- **UI**: `/apps-script/index.html` - Main experiment interface with CodeMirror
+- **UI**: `/apps-script/index.html` - Main exercise interface with CodeMirror
 - **Demographics**: `/apps-script/demographics-form.html` - Demographics survey page
 
 ### Configuration & Data
 - **GAS Config**: `/apps-script/appsscript.json` - OAuth scopes and runtime settings
-- **Scenarios**: `/scenarios/learnbench_scenarios_rev2_S016_S030.csv` - Experiment scenarios with MCQ
+- **Scenarios**: `/scenarios/learnbench_scenarios_rev2_S016_S030.csv` - Exercise scenarios with MCQ
 - **Scenario Generator**: `/scenarios/scenarios.py` - Python script to generate scenario CSV
 
 ### Testing Files
@@ -125,7 +125,7 @@ Run tests locally first (`npm test`), then in GAS environment (`npm run test:gas
 
 ## Common Development Tasks
 
-### Modifying Experiment Logic
+### Modifying Exercise Logic
 1. Edit main logic in `Code.js` or relevant module (e.g., `cache-manager.js`, `sheet-manager.js`)
 2. Update tests in `tests-core.js`, `tests-integration.js`, or `tests-demographics.js`
 3. Run `npm test` locally to catch syntax errors
@@ -167,7 +167,7 @@ Run tests locally first (`npm test`), then in GAS environment (`npm run test:gas
 - **NRIC hashing**: Participant IDs use SHA-256 hash with salt, 8-character prefix
 - **API keys**: Store in Script Properties (`GEMINI_API_KEY`), never in code
 - **Input validation**: Always validate NRIC format (4 chars), email formats
-- **Deployment**: Execute as "Me", access "Anyone" for anonymous experiments
+- **Deployment**: Execute as "Me", access "Anyone" for anonymous sessions
 
 ### MCQ Randomization Specifics
 - **Fisher-Yates shuffle**: Implemented in `cache-manager.js` as `shuffleArray()`

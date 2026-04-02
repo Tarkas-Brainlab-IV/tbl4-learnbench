@@ -1,8 +1,8 @@
-# PromptLab Testing Guide
+# LearnBench Testing Guide
 
 ## Overview
 
-PromptLab includes comprehensive testing to ensure reliability and correctness of the experiment platform. Tests are designed to run both locally (for development) and within Google Apps Script (for production validation).
+LearnBench includes comprehensive testing to ensure reliability and correctness of the platform. Tests are designed to run both locally (for development) and within Google Apps Script (for production validation).
 
 ## Test Structure
 

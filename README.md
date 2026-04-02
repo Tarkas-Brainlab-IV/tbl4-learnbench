@@ -1,16 +1,15 @@
 # LearnBench
 
-A web-based system for conducting human-AI teaming prompting experiments using Google Apps Script and the Gemini API.
+A web-based platform for practicing AI prompting and developing human-AI teaming skills through structured exercises, built on Google Apps Script and the Gemini API.
 
 ## Overview
 
 LearnBench provides a streamlined platform for:
-- Collecting text and image-based prompts from experiment participants
-- Processing multimodal prompts through AI models (Gemini 1.5)
+- Practicing text and image-based prompting with AI models (Gemini 1.5)
+- Structured scenario-based exercises with configurable workflows
 - Logging all interactions to Google Sheets
 - Real-time display of AI responses
 - CodeMirror-based prompt editor with syntax highlighting
-- Scenario-based experiments with configurable workflows
 
 ## Architecture
 
@@ -114,13 +113,13 @@ On first deployment, you'll need to:
 
 ## Usage
 
-### For Experimenters
+### For Instructors
 
-1. Share the deployment URL with participants
+1. Share the deployment URL with learners
 2. Monitor responses in the automatically created Google Sheet
 3. Export data for analysis
 
-### For Participants
+### For Learners
 
 1. Open the provided URL
 2. Enter participant ID (last 4 characters of NRIC)
@@ -224,7 +223,7 @@ The interface supports light, dark, and system themes. Users can switch using th
 - Rubric-based scoring integration
 - Export to various formats (CSV, JSON)
 - A/B testing different models
-- Time pressure experiments
+- Time-constrained exercises
 - Multi-turn conversations
 
 ## License

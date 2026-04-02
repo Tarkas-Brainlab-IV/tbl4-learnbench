@@ -1,4 +1,4 @@
-# PromptLab Authorization Fix
+# LearnBench Authorization Fix
 
 ## ✅ The Solution
 
@@ -15,7 +15,7 @@ The `SpreadsheetApp.create is not a function` error occurs because the script ha
 
 This function will:
 - Trigger the authorization flow
-- Create the experiment spreadsheet
+- Create the data spreadsheet
 - Store its ID for future use
 - Set up all required sheets
 

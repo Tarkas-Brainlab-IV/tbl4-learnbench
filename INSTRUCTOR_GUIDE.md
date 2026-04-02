@@ -1,4 +1,4 @@
-# PromptLab Instructor Guide
+# LearnBench Instructor Guide
 
 ## Quick Reference
 
@@ -128,11 +128,11 @@ const cohortA = data.filter(row =>
 
 ## Tips for Research
 
-1. **Consistent Timing**: Run experiments at scheduled class times
+1. **Consistent Timing**: Run sessions at scheduled class times
 2. **Monitor Quality**: Check for copy-paste patterns
 3. **Track Progress**: Compare monthly cohort performance
 4. **Privacy First**: Never try to reverse-engineer hashes
-5. **Experimental Neutrality**: Students see no branding or experiment indicators
+5. **Clean UI**: Students see a distraction-free interface
 
 ## Troubleshooting Checklist
 

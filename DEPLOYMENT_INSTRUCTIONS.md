@@ -1,4 +1,4 @@
-# PromptLab Deployment Update - Theme Switcher & Bug Fixes
+# LearnBench Deployment Update - Theme Switcher & Bug Fixes
 
 ## Current Deployment Information
 - **Script ID**: 1kiaaKRHCvvknaV2asTYp3AfH-BQh9g5-Iip_Em8EqfReos4-dzCRCgal

@@ -1,27 +1,27 @@
-# LearnBench Experiment Platform - AI Designer Guide
+# LearnBench - AI Designer Guide
 
 ## System Overview
-LearnBench is a versatile Google Apps Script-based platform for human-AI interaction experiments. While originally designed for decision-making studies, it serves as a general-purpose experimentation system for:
-- AI-augmented decision making
-- Prompt engineering skill assessment
-- A/B testing of AI interactions
-- Human-AI collaboration studies
-- LLM behavior evaluation
+LearnBench is a versatile Google Apps Script-based platform for practicing AI prompting and developing human-AI teaming skills. It supports a range of structured learning activities:
+- AI-augmented decision making exercises
+- Prompt engineering skill development
+- A/B comparison of AI interaction approaches
+- Human-AI collaboration practice
+- LLM behavior exploration
 - Training effectiveness measurement
 
-Participants interact with configurable scenarios, optionally use AI assistance, and all interactions are tracked in Google Sheets for analysis.
+Learners interact with configurable scenarios, optionally use AI assistance, and all interactions are tracked in Google Sheets for analysis.
 
 ## Core Capabilities
 
-### 1. Scenario-Based Experiments
-- **Sequential Scenarios**: Present multiple decision scenarios to participants
+### 1. Scenario-Based Exercises
+- **Sequential Scenarios**: Present multiple decision scenarios to learners
 - **Markdown Support**: Scenarios support full markdown formatting (headers, lists, tables, bold, italic)
 - **Image Support**: Optional images per scenario via URL
 - **Multiple Choice**: Each scenario has 2-5 options with pre-assigned scores
 - **Auto-advancement**: Scenarios can auto-advance or require manual progression
 
 ### 2. AI Integration (Gemini)
-- **Optional AI Assistant**: Can be enabled/disabled per experiment
+- **Optional AI Assistant**: Can be enabled/disabled per session
 - **Context Memory**: AI can remember previous exchanges (configurable window size)
 - **Image Analysis**: Participants can paste/upload images for AI to analyze
 - **Token Tracking**: All AI usage is logged with token counts
@@ -29,7 +29,7 @@ Participants interact with configurable scenarios, optionally use AI assistance,
 
 ### 3. Data Collection Points
 
-#### Pre-Experiment
+#### Pre-Session
 - **Participant ID**: Generated from 4-character NRIC hash (Singapore context)
 - **Demographics** (optional, configurable timing):
   - Age band (18-24, 25-34, 35-44, 45-54, 55-64, 65+)
@@ -41,14 +41,14 @@ Participants interact with configurable scenarios, optionally use AI assistance,
   - LLM usage frequency
   - Military/uniformed service experience
 
-#### During Experiment
+#### During Session
 - **Scenario Responses**: Option selected, score, timestamp
 - **AI Interactions**: Full prompt/response pairs with timestamps
 - **Token Usage**: Per interaction and cumulative
 - **Timing Data**: Response times, session duration
 - **Cohort Detection**: Automatic clustering of class sessions
 
-#### Post-Experiment
+#### Post-Session
 - **Exit Survey** (NASA-TLX style):
   - Mental demand (0-100)
   - Confidence level (0-100)
@@ -70,19 +70,19 @@ Participants interact with configurable scenarios, optionally use AI assistance,
 | Auto-close on Complete | Boolean | Close tab when finished |
 | Allow Out of Class | Boolean | Accept submissions anytime |
 | Timezone | String | For cohort scheduling |
-| Enable Exit Survey | Boolean | Show post-experiment survey |
+| Enable Exit Survey | Boolean | Show post-session survey |
 
 ### 5. Spreadsheet Structure
 
 #### Required Sheets
 - **Prompts**: Main log (timestamp, participant, cohort, prompt, response, tokens)
-- **Scenarios**: Experiment scenarios
+- **Scenarios**: Exercise scenarios
 - **Setup**: Configuration settings
 
 #### Auto-Created Sheets
 - **Demographics**: Participant information
 - **Scenario_Responses**: MCQ responses and scores
-- **Exit_Survey**: Post-experiment metrics
+- **Exit_Survey**: Post-session metrics
 - **Session_Metrics**: Aggregate session data
 
 ### 6. Scenario Sheet Format
@@ -104,7 +104,7 @@ Participants interact with configurable scenarios, optionally use AI assistance,
 - **Cold Start Handling**: Retroactive cohort assignment
 - **Activity Tracking**: IN-CLASS vs OUT-OF-CLASS status
 
-### 8. Key Features for Experiment Design
+### 8. Key Features for Exercise Design
 
 #### Randomization Options
 - Scenarios presented in sequence (no built-in randomization)
@@ -112,7 +112,7 @@ Participants interact with configurable scenarios, optionally use AI assistance,
 
 #### Conditional Logic
 - Demographics shown after N prompts OR N scenarios
-- AI availability can be toggled mid-experiment via config
+- AI availability can be toggled mid-session via config
 
 #### Data Quality
 - **Duplicate Prevention**: 5-second submission window blocking
@@ -131,7 +131,7 @@ Participants interact with configurable scenarios, optionally use AI assistance,
 - **URL**: Single deployment URL for all participants
 - **Updates**: Changes reflect immediately (with cache clear)
 
-### 10. Experiment Workflow
+### 10. Session Workflow
 
 1. **Setup Phase**
    - Configure settings in Setup sheet
@@ -159,7 +159,7 @@ Participants interact with configurable scenarios, optionally use AI assistance,
 - No real-time collaboration features
 - Limited to Google's execution quotas
 
-### 12. Best Practices for Experiment Design
+### 12. Best Practices for Exercise Design
 1. **Test scenarios** with a TEST_USER participant first
 2. **Clear cache** after configuration changes (EMERGENCY_CLEAR_ALL_CACHES function)
 3. **Monitor cohort detection** for first few participants
@@ -169,7 +169,7 @@ Participants interact with configurable scenarios, optionally use AI assistance,
 7. **Design for 5-15 minute sessions** optimal engagement
 8. **Score options meaningfully** for analysis
 
-## Quick Start for New Experiment
+## Quick Start for New Exercise
 
 ```javascript
 // 1. Set spreadsheet ID in Script Properties
@@ -277,9 +277,9 @@ Options:
 ```
 **Analysis**: Strategy effectiveness across participant groups
 
-## Extending for Custom Experiments
+## Extending for Custom Exercises
 
-The platform's flexibility allows for creative experiment designs:
+The platform's flexibility allows for creative exercise designs:
 
 1. **Time-pressure studies**: Use auto-advance with short delays
 2. **Iterative refinement**: Multiple attempts at same scenario
@@ -288,9 +288,9 @@ The platform's flexibility allows for creative experiment designs:
 5. **Calibration studies**: Compare human vs AI confidence
 6. **Workflow optimization**: Multi-step tasks with checkpoints
 
-## Key Advantages for General Experimentation
+## Key Advantages
 
-- **Low barrier**: No coding required for experimenters
+- **Low barrier**: No coding required for instructors
 - **Real-time data**: Immediate access to results
 - **Natural interaction**: Familiar chat-like interface
 - **Flexible scoring**: Arbitrary point systems for any metric
