@@ -73,7 +73,7 @@ To change to production:
 
 ```bash
 # Navigate to apps-script directory
-cd /Users/pdfinn/github.com/NERVsystems/nerv-learnbench/apps-script
+cd apps-script
 
 # Push code to Google Apps Script
 clasp push

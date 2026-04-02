@@ -1,10 +1,10 @@
-# NERV LearnBench
+# LearnBench
 
 A web-based system for conducting human-AI teaming prompting experiments using Google Apps Script and the Gemini API.
 
 ## Overview
 
-NERV LearnBench provides a streamlined platform for:
+LearnBench provides a streamlined platform for:
 - Collecting text and image-based prompts from experiment participants
 - Processing multimodal prompts through AI models (Gemini 1.5)
 - Logging all interactions to Google Sheets

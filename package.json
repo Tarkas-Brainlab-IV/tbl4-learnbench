@@ -1,11 +1,11 @@
 {
-  "name": "nerv-learnbench",
+  "name": "tbl4-learnbench",
   "version": "1.0.0",
   "description": "Human-AI teaming prompting experiment platform",
   "scripts": {
     "install:clasp": "npm install -g @google/clasp",
     "login": "clasp login",
-    "create": "clasp create --title 'NERV LearnBench' --type webapp --rootDir ./apps-script",
+    "create": "clasp create --title 'LearnBench' --type webapp --rootDir ./apps-script",
     "push": "clasp push",
     "pull": "clasp pull",
     "open": "clasp open",
@@ -29,7 +29,7 @@
     "ai",
     "prompting"
   ],
-  "author": "NERV Systems",
+  "author": "Tarkas Brainlab IV",
   "license": "MIT",
   "devDependencies": {
     "@google/clasp": "^2.4.2",

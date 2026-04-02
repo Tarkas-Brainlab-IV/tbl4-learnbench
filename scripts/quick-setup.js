@@ -31,7 +31,7 @@ try {
 const nextIndex = (lastCopiedIndex + 1) % files.length;
 const fileToGopy = files[nextIndex];
 
-console.log(`📋 NERV LearnBench - Quick Setup Helper`);
+console.log(`📋 LearnBench - Quick Setup Helper`);
 console.log(`======================================`);
 console.log();
 

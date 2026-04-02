@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-NERV LearnBench is a web-based human-AI collaboration experiment platform that uses Google Apps Script and the Gemini API for conducting prompting experiments. Data is stored in Google Sheets and the application runs as a Google Apps Script Web App.
+LearnBench is a web-based human-AI collaboration experiment platform that uses Google Apps Script and the Gemini API for conducting prompting experiments. Data is stored in Google Sheets and the application runs as a Google Apps Script Web App.
 
 Key features:
 - Scenario-based experiments with MCQ (Multiple Choice Questions)

@@ -1,6 +1,6 @@
 # Development Guide
 
-This guide explains how to efficiently develop and iterate on the NERV LearnBench Google Apps Script project.
+This guide explains how to efficiently develop and iterate on the LearnBench Google Apps Script project.
 
 ## Quick Start
 
@@ -31,7 +31,7 @@ npm run logs   # View real-time logs in terminal
 
 3. **Create project** (first time only):
    ```bash
-   clasp create --title "NERV LearnBench" --type webapp --rootDir ./apps-script
+   clasp create --title "LearnBench" --type webapp --rootDir ./apps-script
    ```
    This creates a `.clasp.json` file with your script ID.
 

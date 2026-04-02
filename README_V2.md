@@ -1,4 +1,4 @@
-# NERV LearnBench v2.0 🚀
+# LearnBench v2.0 🚀
 
 > **Now 3-5x faster, 10x more stable, with enterprise-grade monitoring and error recovery**
 
@@ -42,8 +42,8 @@ A high-performance web-based platform for conducting human-AI teaming experiment
 
 1. **Clone the repository**:
 ```bash
-git clone https://github.com/NERVsystems/nerv-learnbench.git
-cd nerv-learnbench
+git clone https://github.com/Tarkas-Brainlab-IV/tbl4-learnbench.git
+cd tbl4-learnbench
 npm install
 ```
 
@@ -58,7 +58,7 @@ clasp login
 # Clone your existing project or create new
 clasp clone [your-script-id]  # For existing project
 # OR
-clasp create --title "PromptLab v2" --type webapp  # For new project
+clasp create --title "LearnBench" --type webapp  # For new project
 
 # Push all files
 clasp push
@@ -326,7 +326,7 @@ MIT License - See [LICENSE](LICENSE) file for details
 
 - Google Apps Script team for the platform
 - Google AI team for Gemini API
-- NERV Systems research team
+- Tarkas Brainlab IV
 - All contributors and testers
 
 ---

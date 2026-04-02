@@ -8,7 +8,7 @@ If you're experiencing authentication issues with clasp, here's how to set up th
    - Go to [script.google.com](https://script.google.com)
    - Sign out of all Google accounts except the one you want to use
    - Create a new project
-   - Name it "NERV LearnBench"
+   - Name it "LearnBench"
 
 2. **Add files manually**:
    - Create new files in the editor:
@@ -34,7 +34,7 @@ If you're experiencing authentication issues with clasp, here's how to set up th
    - Authorize and connect to your GitHub account
 
 2. **Link to repository**:
-   - Repository: `NERVsystems/nerv-learnbench`
+   - Repository: `Tarkas-Brainlab-IV/tbl4-learnbench`
    - Branch: `main`
    - Folder: `apps-script`
 
@@ -48,7 +48,7 @@ Create this bookmarklet for easier copying:
 ```javascript
 javascript:(function(){
   const files = ['Code.gs', 'index.html', 'appsscript.json'];
-  const baseUrl = 'https://raw.githubusercontent.com/NERVsystems/nerv-learnbench/main/apps-script/';
+  const baseUrl = 'https://raw.githubusercontent.com/Tarkas-Brainlab-IV/tbl4-learnbench/main/apps-script/';
   files.forEach(async (file) => {
     const response = await fetch(baseUrl + file);
     const content = await response.text();
@@ -71,8 +71,8 @@ javascript:(function(){
    auth.authenticate_user()
    
    # Clone your repo
-   !git clone https://github.com/NERVsystems/nerv-learnbench.git
-   !cd nerv-learnbench && clasp create --title "NERV LearnBench" --type webapp --rootDir ./apps-script
+   !git clone https://github.com/Tarkas-Brainlab-IV/tbl4-learnbench.git
+   !cd tbl4-learnbench && clasp create --title "LearnBench" --type webapp --rootDir ./apps-script
    ```
 
 ## Option 5: Container-based Development
