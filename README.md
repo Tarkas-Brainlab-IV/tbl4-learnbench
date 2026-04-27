@@ -1,6 +1,14 @@
-# LearnBench
+<p align="center">
+  <img src="logo.png" alt="Tarkas Brainlab IV" width="200">
+</p>
 
-A web-based platform for practicing AI prompting and developing human-AI teaming skills through structured exercises, built on Google Apps Script and the Gemini API.
+<h1 align="center">Tarkas Brainlab IV — LearnBench</h1>
+
+<p align="center">
+  A web-based platform for practicing AI prompting and developing human-AI teaming skills through structured exercises, built on Google Apps Script and the Gemini API.
+</p>
+
+---
 
 ## Overview
 
