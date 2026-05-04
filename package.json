@@ -5,7 +5,7 @@
   "scripts": {
     "install:clasp": "npm install -g @google/clasp",
     "login": "clasp login",
-    "create": "clasp create --title 'LearnBench' --type webapp --rootDir ./apps-script",
+    "create": "clasp create --title 'LearnBench' --type standalone --rootDir ./apps-script",
     "push": "clasp push",
     "pull": "clasp pull",
     "open": "clasp open",

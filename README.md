@@ -29,72 +29,70 @@ LearnBench provides a streamlined platform for:
 
 ## Setup Instructions
 
-### Method 1: Quick Setup (No Authentication Issues)
+The supported path is **clasp** (Google's official Apps Script CLI). It uploads all ~35 files in `apps-script/` in one go. The old `scripts/quick-setup.js` clipboard helper only handles 3 files and will not produce a working app — don't use it.
 
-1. **Run the quick setup script**:
-   ```bash
-   node scripts/quick-setup.js
-   ```
-   This copies the first file to your clipboard.
+### 1. Install dependencies
 
-2. **Go to [script.google.com](https://script.google.com)** and create a new project
-
-3. **Paste** the clipboard content into Code.gs
-
-4. **Run the script again** for each file:
-   ```bash
-   node scripts/quick-setup.js  # Copies index.html → Create HTML file
-   node scripts/quick-setup.js  # Copies appsscript.json → See note below
-   ```
-   
-   **For appsscript.json**: Go to Project Settings (⚙️) → Check "Show appsscript.json"
-
-5. **Deploy** your Web App in the Apps Script editor
-
-### Method 2: Automated Setup with Clasp
-
-If authentication works for you:
 ```bash
 npm install
-npm run setup  # Login and create project
-npm run push   # Push files
-npm run deploy # Deploy web app
+npm install -g @google/clasp
 ```
 
-### Method 3: Manual Copy
+### 2. Authenticate clasp
 
-1. Go to [script.google.com](https://script.google.com)
-2. Create a new project
-3. Manually copy each file from `apps-script/` folder
-
-### 3. Configure Gemini API (Optional)
-
-To use the real Gemini API instead of mock responses:
-
-1. Enable the Generative Language API in [Google Cloud Console](https://console.cloud.google.com)
-2. Create an API key
-3. In Apps Script: File → Project Properties → Script Properties
-4. Add property: `GEMINI_API_KEY` with your API key
-5. Uncomment the `callGeminiAPIProduction` function in Code.gs
-6. Replace the mock implementation with the production version
-
-### 4. Deploy the Web App
-
-**Using Clasp**:
 ```bash
-npm run deploy
+clasp login
 ```
 
-**Or manually in Apps Script editor**:
-1. Deploy → New deployment
-2. Configuration:
-   - Type: Web app
-   - Execute as: Me
-   - Who has access: Anyone (or "Anyone with the link" for restricted access)
-3. Click "Deploy"
-4. Copy the deployment URL
+Opens a browser. Sign in with the Google account that should own the Apps Script project. Confirm with:
 
-### 5. Development Workflow
+```bash
+clasp show-authorized-user
+```
+
+### 3. Create the Apps Script project
+
+```bash
+npm run create
+```
+
+This runs `clasp create --type standalone --rootDir ./apps-script` and writes a `.clasp.json` linking your local repo to the new script. (Note: clasp v3 does not accept `--type webapp` — use `standalone`. The web-app deployment happens in step 6.)
+
+### 4. Push all files
+
+```bash
+npm run push
+```
+
+Uploads every `.js`, `.html`, and `appsscript.json` under `apps-script/`. Re-run any time you change source.
+
+### 5. Configure Script Properties and create the data sheet
+
+Open the project in the editor:
+
+```bash
+npm run open
+```
+
+Then:
+
+1. **Add `GEMINI_API_KEY`**: ⚙️ Project Settings → Script Properties → Add script property. Get a key at https://aistudio.google.com/apikey.
+2. **Run `setupPromptLab`** from the editor:
+   - In the editor, select `setup.js` in the file list.
+   - In the function dropdown (next to ▶ Run), choose `setupPromptLab` → click **Run**.
+   - First run triggers OAuth: you'll see *"Google hasn't verified this app"* — click **Advanced → Go to LearnBench (unsafe)** → Allow. The "unsafe" warning is normal for personal/unverified scripts.
+   - The execution log will print the new spreadsheet URL. `setupPromptLab` also stores its ID in Script Properties as `PROMPTLAB_SHEET_ID` and configures the default class schedule.
+
+### 6. Deploy as a web app
+
+In the Apps Script editor: **Deploy → New deployment → ⚙️ → Web app**.
+
+- **Execute as:** Me
+- **Who has access:** Anyone (public) or Anyone with Google account (signed-in)
+
+Click **Deploy** and copy the **Web app URL**. (The CLI alternative `npm run deploy` creates a deployment but the web-app config is easier to set in the UI.)
+
+### 7. Development Workflow
 
 **Watch for changes** (auto-push on save):
 ```bash
@@ -111,7 +109,7 @@ npm run logs  # Or: clasp logs --tail
 npm run pull  # Or: clasp pull
 ```
 
-### 6. Access Permissions
+### 8. Access Permissions
 
 On first deployment, you'll need to:
 1. Review permissions

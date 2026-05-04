@@ -89,7 +89,7 @@ function setupPromptLab() {
     
     // Store spreadsheet ID for later use
     PropertiesService.getScriptProperties()
-      .setProperty('PROMPTLAB_SPREADSHEET_ID', spreadsheet.getId());
+      .setProperty('PROMPTLAB_SHEET_ID', spreadsheet.getId());
     
     // Setup class schedule
     setupYourClassSchedule();

@@ -12,6 +12,7 @@ yarn-error.log*
 # Google Apps Script
 .clasp.json
 .clasprc.json
+.last-copied
 
 # IDE
 .vscode/

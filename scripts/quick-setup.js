@@ -10,7 +10,7 @@ const { execSync } = require('child_process');
 const path = require('path');
 
 const files = [
-  { name: 'Code.gs', path: 'apps-script/Code.gs' },
+  { name: 'Code.gs', path: 'apps-script/Code.js' },
   { name: 'index.html', path: 'apps-script/index.html' },
   { name: 'appsscript.json', path: 'apps-script/appsscript.json' }
 ];
