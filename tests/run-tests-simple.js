@@ -2,6 +2,7 @@
 
 // Simple test runner that avoids conflicts
 const { execSync } = require('child_process');
+const fs = require('fs');
 const path = require('path');
 
 console.log('🧪 Running PromptLab Tests (Simple Mode)\n');
@@ -9,18 +10,15 @@ console.log('🧪 Running PromptLab Tests (Simple Mode)\n');
 try {
   // Change to apps-script directory
   process.chdir(path.join(__dirname, '..', 'apps-script'));
-  
-  // Check if we can import the files
+
   console.log('Validating test files...');
-  
-  // Run a basic syntax check
-  const files = [
-    'Code.js',
-    'clustering-analysis.js', 
-    'demographics-storage.js',
-    'demographics-check.js'
-  ];
-  
+
+  // Syntax-check every .js file shipped in apps-script/ so the CI
+  // catches breakage anywhere in the codebase, not just a hand-picked subset.
+  const files = fs.readdirSync('.')
+    .filter(f => f.endsWith('.js'))
+    .sort();
+
   let hasErrors = false;
   files.forEach(file => {
     try {
@@ -31,17 +29,16 @@ try {
       hasErrors = true;
     }
   });
-  
+
   if (hasErrors) {
     console.log('\n❌ Tests failed due to syntax errors');
     process.exit(1);
   }
-  
+
   console.log('\n✅ All files have valid syntax');
   console.log('Note: Full test suite should be run in Google Apps Script environment');
-  
+
   // Create a dummy test report for CI
-  const fs = require('fs');
   const report = {
     timestamp: new Date().toISOString(),
     summary: {
