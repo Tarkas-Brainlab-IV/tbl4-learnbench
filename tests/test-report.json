@@ -1,14 +1,34 @@
 {
-  "timestamp": "2026-04-03T14:42:15.483Z",
+  "timestamp": "2026-05-16T08:04:37.975Z",
   "summary": {
-    "total": 4,
-    "passed": 4,
+    "total": 31,
+    "passed": 31,
     "failed": 0,
     "duration": 100
   },
   "details": [
     {
+      "name": "Syntax check: Code-gemini.js",
+      "passed": true
+    },
+    {
+      "name": "Syntax check: Code-secure.js",
+      "passed": true
+    },
+    {
       "name": "Syntax check: Code.js",
+      "passed": true
+    },
+    {
+      "name": "Syntax check: cache-manager.js",
+      "passed": true
+    },
+    {
+      "name": "Syntax check: class-schedule-setup.js",
+      "passed": true
+    },
+    {
+      "name": "Syntax check: clear-cache.js",
       "passed": true
     },
     {
@@ -16,11 +36,99 @@
       "passed": true
     },
     {
-      "name": "Syntax check: demographics-storage.js",
+      "name": "Syntax check: debug-scenario-structure.js",
       "passed": true
     },
     {
       "name": "Syntax check: demographics-check.js",
+      "passed": true
+    },
+    {
+      "name": "Syntax check: demographics-storage.js",
+      "passed": true
+    },
+    {
+      "name": "Syntax check: diagnostics.js",
+      "passed": true
+    },
+    {
+      "name": "Syntax check: emergency-cache-clear.js",
+      "passed": true
+    },
+    {
+      "name": "Syntax check: find-wrong-structure.js",
+      "passed": true
+    },
+    {
+      "name": "Syntax check: fix-scenario-loading.js",
+      "passed": true
+    },
+    {
+      "name": "Syntax check: fix-spreadsheet-id.js",
+      "passed": true
+    },
+    {
+      "name": "Syntax check: optimized-sheet-ops.js",
+      "passed": true
+    },
+    {
+      "name": "Syntax check: scenario-debug.js",
+      "passed": true
+    },
+    {
+      "name": "Syntax check: scenario-fix.js",
+      "passed": true
+    },
+    {
+      "name": "Syntax check: setup.js",
+      "passed": true
+    },
+    {
+      "name": "Syntax check: shadow-detection.js",
+      "passed": true
+    },
+    {
+      "name": "Syntax check: sheet-manager.js",
+      "passed": true
+    },
+    {
+      "name": "Syntax check: simple-setup.js",
+      "passed": true
+    },
+    {
+      "name": "Syntax check: test-endpoint.js",
+      "passed": true
+    },
+    {
+      "name": "Syntax check: test-framework.js",
+      "passed": true
+    },
+    {
+      "name": "Syntax check: test-mcq-randomization.js",
+      "passed": true
+    },
+    {
+      "name": "Syntax check: test-runner.js",
+      "passed": true
+    },
+    {
+      "name": "Syntax check: test-scenario-display.js",
+      "passed": true
+    },
+    {
+      "name": "Syntax check: tests-core.js",
+      "passed": true
+    },
+    {
+      "name": "Syntax check: tests-demographics.js",
+      "passed": true
+    },
+    {
+      "name": "Syntax check: tests-integration.js",
+      "passed": true
+    },
+    {
+      "name": "Syntax check: tests.js",
       "passed": true
     }
   ]
